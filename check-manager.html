@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K WHOLESALE LLC — Check Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#1c2333; --bg2:#232d42; --bg3:#2a3550;
+    --panel:rgba(35,45,66,0.95);
+    --border:rgba(255,255,255,0.08); --border2:rgba(255,137,0,0.25);
+    --orange:#ff8900; --orange2:#ffaa33; --orange3:#ffd280;
+    --green:#22c55e; --red:#ef4444; --yellow:#f59e0b; --cyan:#38bdf8;
+    --text:#e8edf5; --text2:#a0aec0; --dim:#607089;
+    --shadow:0 8px 40px rgba(0,0,0,0.45);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 80% 50% at 10% 5%,rgba(255,137,0,0.06) 0%,transparent 55%),
+    radial-gradient(ellipse 60% 60% at 90% 95%,rgba(56,189,248,0.04) 0%,transparent 55%),
+    repeating-linear-gradient(-45deg,transparent,transparent 60px,rgba(255,255,255,0.012) 60px,rgba(255,255,255,0.012) 61px);}
+  .app{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:18px;}
+
+  /* ── SYNC STATUS BAR ── */
+  .sync-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 18px;border-radius:10px;margin-bottom:12px;
+    background:rgba(28,35,51,0.8);border:1px solid var(--border);
+    font-size:12px;
+  }
+  .sync-indicator{display:flex;align-items:center;gap:8px;}
+  .sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .sync-dot.online{background:var(--green);box-shadow:0 0 0 0 rgba(34,197,94,0.7);animation:pulse 2s infinite;}
+  .sync-dot.offline{background:var(--red);}
+  .sync-dot.syncing{background:var(--yellow);animation:blink 0.8s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,0.7)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+  .sync-text{color:var(--text2);font-weight:500;}
+  .sync-time{color:var(--dim);font-size:11px;}
+  .sync-btn{padding:4px 12px;border:1px solid rgba(255,137,0,0.3);background:rgba(255,137,0,0.08);color:var(--orange2);border-radius:8px;cursor:pointer;font-size:11px;font-family:'Inter',sans-serif;font-weight:600;transition:all 0.2s;}
+  .sync-btn:hover{background:rgba(255,137,0,0.18);}
+
+  /* ── HEADER ── */
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:22px 32px;
+    background:linear-gradient(135deg,#1e2d4a 0%,#253660 50%,#1e2d4a 100%);
+    border:2px solid rgba(255,137,0,0.45);border-radius:20px;
+    margin-bottom:14px;
+    box-shadow:0 12px 50px rgba(0,0,0,0.55),0 0 40px rgba(255,137,0,0.12);
+    position:relative;overflow:hidden;
+  }
+  header::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;
+    background:linear-gradient(90deg,transparent,var(--orange) 20%,var(--orange2) 50%,var(--orange) 80%,transparent);}
+  header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,137,0,0.4),transparent);}
+
+  .brand{display:flex;align-items:center;gap:20px;}
+  .logo-mark{width:72px;height:72px;flex-shrink:0;background:linear-gradient(145deg,var(--orange),#cc6e00);
+    border-radius:16px;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 28px rgba(255,137,0,0.55),0 2px 8px rgba(0,0,0,0.5);position:relative;}
+  .logo-mark::after{content:'';position:absolute;inset:0;border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,0.2) 0%,transparent 60%);}
+  .logo-k{font-family:'Bebas Neue',sans-serif;font-size:44px;color:#fff;line-height:1;text-shadow:0 3px 10px rgba(0,0,0,0.4);position:relative;z-index:1;}
+  .brand-name{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:3px;
+    background:linear-gradient(90deg,var(--orange),var(--orange2),var(--orange3));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;}
+  .brand-sub{font-size:11px;font-weight:700;color:rgba(255,170,51,0.7);letter-spacing:2.5px;text-transform:uppercase;}
+  .brand-divider{width:2px;height:56px;background:linear-gradient(to bottom,transparent,rgba(255,137,0,0.5),transparent);margin:0 12px;}
+  .system-label .s1{font-size:16px;font-weight:700;color:var(--text);display:block;}
+  .system-label .s2{font-size:11px;color:var(--dim);letter-spacing:1.2px;text-transform:uppercase;display:block;margin-top:4px;}
+
+  .hdr-stats{display:flex;gap:12px;flex-wrap:wrap;}
+  .stat-pill{text-align:center;padding:10px 20px;border-radius:14px;border:1px solid rgba(255,137,0,0.25);background:rgba(10,17,32,0.6);transition:all 0.2s;}
+  .stat-pill:hover{border-color:rgba(255,137,0,0.5);transform:translateY(-1px);}
+  .stat-pill .num{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:700;color:var(--orange2);display:block;}
+  .stat-pill .lbl{font-size:10px;color:var(--dim);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px;}
+
+  /* ── DATE BAR ── */
+  .date-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;
+    background:linear-gradient(135deg,rgba(42,53,80,0.8),rgba(28,35,51,0.8));
+    border:1px solid rgba(255,137,0,0.2);border-radius:13px;margin-bottom:14px;}
+  .date-bar-left{display:flex;align-items:center;gap:12px;}
+  .date-cal{font-size:22px;}
+  .date-label{font-size:13px;font-weight:600;color:var(--text2);}
+  .date-today{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--orange2);}
+  .date-bar-right{font-size:12px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;}
+
+  /* ── BANNERS ── */
+  .today-banner,.overdue-banner,.upcoming-banner{border-radius:13px;margin-bottom:12px;overflow:hidden;display:none;}
+  .today-banner.has,.overdue-banner.has,.upcoming-banner.has{display:block;}
+  .today-banner{background:linear-gradient(135deg,rgba(34,197,94,0.09),rgba(34,197,94,0.03));border:1px solid rgba(34,197,94,0.28);}
+  .overdue-banner{background:linear-gradient(135deg,rgba(239,68,68,0.08),rgba(239,68,68,0.03));border:1px solid rgba(239,68,68,0.24);}
+  .upcoming-banner{background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(245,158,11,0.03));border:1px solid rgba(245,158,11,0.24);}
+  .banner-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;cursor:pointer;user-select:none;}
+  .today-banner .banner-head{background:rgba(34,197,94,0.07);border-bottom:1px solid rgba(34,197,94,0.16);}
+  .overdue-banner .banner-head{background:rgba(239,68,68,0.07);border-bottom:1px solid rgba(239,68,68,0.14);}
+  .upcoming-banner .banner-head{background:rgba(245,158,11,0.07);border-bottom:1px solid rgba(245,158,11,0.14);}
+  .banner-title{display:flex;align-items:center;gap:9px;font-weight:700;font-size:13px;}
+  .today-banner .banner-title{color:var(--green);}
+  .overdue-banner .banner-title{color:var(--red);}
+  .upcoming-banner .banner-title{color:var(--yellow);}
+  .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+  .banner-body{padding:11px 16px;}
+  .chevron{transition:transform 0.3s;display:inline-block;color:var(--dim);font-style:normal;}
+  .collapsed .chevron{transform:rotate(-90deg);}
+  .today-row{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:9px;margin:5px 0;background:rgba(34,197,94,0.05);border:1px solid rgba(34,197,94,0.13);flex-wrap:wrap;gap:7px;}
+  .alert-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;margin:4px 0;flex-wrap:wrap;gap:6px;}
+  .alert-row.overdue{background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.13);}
+  .alert-row.upcoming{background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.13);}
+  .ar-name{font-weight:600;font-size:13px;}
+  .ar-sub{font-size:11px;color:var(--dim);margin-top:1px;}
+  .ar-days{font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;white-space:nowrap;}
+  .ar-days.overdue{background:rgba(239,68,68,0.13);color:var(--red);}
+  .ar-days.upcoming{background:rgba(245,158,11,0.13);color:var(--yellow);}
+
+  /* ── TABS ── */
+  .tabs{display:flex;gap:5px;margin-bottom:16px;background:rgba(28,35,51,0.9);border:1px solid rgba(255,137,0,0.2);border-radius:14px;padding:6px;backdrop-filter:blur(20px);}
+  .tab{flex:1;padding:11px 12px;border:none;background:transparent;color:var(--dim);font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;border-radius:9px;transition:all 0.25s;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;position:relative;}
+  .tab:hover{color:var(--text2);background:rgba(255,137,0,0.07);}
+  .tab.active{background:linear-gradient(135deg,var(--orange),#cc6e00);color:#fff;font-weight:700;box-shadow:0 4px 14px rgba(255,137,0,0.4);}
+  .tab .tc{position:absolute;top:3px;right:5px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+
+  /* ── PANELS ── */
+  .panel{display:none;}.panel.active{display:block;}
+
+  /* ── CARD ── */
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:15px;padding:22px;margin-bottom:14px;backdrop-filter:blur(20px);box-shadow:var(--shadow);}
+  .card-title{font-size:12px;font-weight:700;color:var(--orange2);margin-bottom:16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,137,0,0.13);padding-bottom:12px;letter-spacing:0.5px;text-transform:uppercase;}
+  .fg{display:flex;flex-direction:column;gap:5px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:12px;}
+  .full{grid-column:1/-1;}
+  label{font-size:10px;font-weight:700;color:var(--dim);letter-spacing:1px;text-transform:uppercase;}
+  label.g{color:var(--green)!important;}
+  input,select,textarea{background:rgba(28,35,51,0.8);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;transition:all 0.22s;outline:none;width:100%;}
+  input:focus,select:focus,textarea:focus{border-color:var(--orange);background:rgba(28,35,51,0.95);box-shadow:0 0 0 3px rgba(255,137,0,0.11);}
+  input::placeholder{color:rgba(96,112,137,0.45);font-size:12px;}
+  select option{background:var(--bg2);}
+  #f-deposit{border-color:rgba(34,197,94,0.28);}
+  #f-deposit:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,0.1);}
+  .mono{font-family:'IBM Plex Mono',monospace;letter-spacing:1px;}
+
+  /* ── BUTTONS ── */
+  .btn{padding:9px 18px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.22s;display:inline-flex;align-items:center;gap:5px;}
+  .btn-primary{background:linear-gradient(135deg,var(--orange),#cc6e00);color:#fff;box-shadow:0 4px 14px rgba(255,137,0,0.32);}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(255,137,0,0.46);}
+  .btn-danger{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.22);}
+  .btn-danger:hover{background:rgba(239,68,68,0.2);}
+  .btn-warning{background:rgba(245,158,11,0.1);color:var(--yellow);border:1px solid rgba(245,158,11,0.22);}
+  .btn-warning:hover{background:rgba(245,158,11,0.2);}
+  .btn-success{background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.22);}
+  .btn-success:hover{background:rgba(34,197,94,0.2);}
+  .btn-cancel{background:rgba(96,112,137,0.1);color:var(--text2);border:1px solid rgba(96,112,137,0.18);}
+  .btn-cancel:hover{background:rgba(96,112,137,0.2);}
+  .btn-blue{background:rgba(56,189,248,0.1);color:var(--cyan);border:1px solid rgba(56,189,248,0.22);}
+  .btn-blue:hover{background:rgba(56,189,248,0.2);}
+  .btn-orange{background:rgba(255,137,0,0.12);color:var(--orange);border:1px solid rgba(255,137,0,0.28);}
+  .btn-orange:hover{background:rgba(255,137,0,0.22);}
+  .btn-sm{font-size:11px;padding:5px 10px;border-radius:7px;}
+
+  /* ── BADGES ── */
+  .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
+  .b-active{background:rgba(34,197,94,0.1);color:#22c55e;border:1px solid rgba(34,197,94,0.25);}
+  .b-bounced{background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.25);}
+  .b-pending{background:rgba(245,158,11,0.1);color:#f59e0b;border:1px solid rgba(245,158,11,0.25);}
+  .b-cleared{background:rgba(56,189,248,0.1);color:#38bdf8;border:1px solid rgba(56,189,248,0.25);}
+  .dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+
+  /* ── SEARCH ── */
+  .search-type-bar{display:flex;gap:0;margin-bottom:14px;border:2px solid rgba(255,137,0,0.35);border-radius:13px;overflow:hidden;background:rgba(10,17,32,0.6);}
+  .stype-btn{flex:1;padding:13px 10px;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;background:transparent;color:var(--dim);transition:all 0.22s;display:flex;align-items:center;justify-content:center;gap:7px;border-right:1px solid rgba(255,137,0,0.2);}
+  .stype-btn:last-child{border-right:none;}
+  .stype-btn:hover{background:rgba(255,137,0,0.08);color:var(--text2);}
+  .stype-btn.active{background:linear-gradient(135deg,var(--orange),#d47200);color:#fff;font-weight:700;}
+  .stype-btn .stype-desc{font-size:10px;opacity:0.75;display:block;margin-top:1px;}
+
+  .cust-search-wrap{position:relative;margin-bottom:16px;}
+  .cust-search-input{width:100%;padding:16px 50px 16px 54px;background:rgba(10,17,32,0.8);border:2px solid rgba(255,137,0,0.4);border-radius:13px;color:var(--text);font-family:'Inter',sans-serif;font-size:16px;font-weight:500;outline:none;transition:all 0.25s;}
+  .cust-search-input:focus{border-color:var(--orange);box-shadow:0 0 0 4px rgba(255,137,0,0.13);}
+  .cust-search-input::placeholder{color:rgba(96,112,137,0.5);font-size:14px;}
+  .cust-search-icon{position:absolute;left:18px;top:50%;transform:translateY(-50%);font-size:20px;pointer-events:none;}
+  .cust-search-clear{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:rgba(96,112,137,0.2);border:none;color:var(--dim);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px;display:none;align-items:center;justify-content:center;transition:all 0.2s;}
+  .cust-search-clear:hover{background:rgba(239,68,68,0.2);color:var(--red);}
+  .cust-search-clear.show{display:flex;}
+  .cust-suggestions{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:100;background:var(--bg3);border:1px solid rgba(255,137,0,0.32);border-radius:13px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.55);display:none;}
+  .cust-suggestions.open{display:block;}
+  .cust-sug-item{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;cursor:pointer;transition:background 0.15s;border-bottom:1px solid rgba(255,255,255,0.04);}
+  .cust-sug-item:last-child{border-bottom:none;}
+  .cust-sug-item:hover{background:rgba(255,137,0,0.09);}
+  .cust-sug-left{display:flex;align-items:center;gap:11px;}
+  .cust-sug-avatar{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--orange),#cc6e00);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:17px;color:#fff;flex-shrink:0;}
+  .cust-sug-name{font-weight:700;font-size:14px;}
+  .cust-sug-phone{font-size:11px;color:var(--dim);margin-top:1px;}
+  .cust-sug-meta{display:flex;gap:9px;align-items:center;}
+  .sug-count{font-size:11px;font-weight:700;background:rgba(255,137,0,0.14);color:var(--orange2);padding:2px 10px;border-radius:12px;border:1px solid rgba(255,137,0,0.22);}
+  .sug-amount{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--green);font-weight:600;}
+  .amount-range{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+  .amount-range input{flex:1;min-width:120px;}
+  .amount-range span{color:var(--dim);font-weight:700;flex-shrink:0;}
+
+  /* ── CHECK RESULT LIST ── */
+  .check-result-item{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-radius:11px;margin:7px 0;background:rgba(28,35,51,0.7);border:1px solid var(--border);transition:all 0.2s;flex-wrap:wrap;gap:10px;}
+  .check-result-item:hover{background:rgba(255,137,0,0.06);border-color:rgba(255,137,0,0.2);}
+  .check-result-item.ct{border-color:rgba(34,197,94,0.4);background:rgba(34,197,94,0.05);}
+  .check-result-item.ov{border-color:rgba(239,68,68,0.35);background:rgba(239,68,68,0.05);}
+  .check-result-item.up{border-color:rgba(245,158,11,0.35);background:rgba(245,158,11,0.04);}
+  .cri-left{display:flex;align-items:center;gap:13px;}
+  .cri-icon{width:44px;height:44px;border-radius:10px;background:rgba(255,137,0,0.12);border:1px solid rgba(255,137,0,0.25);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+  .cri-store{font-weight:700;font-size:14px;}
+  .cri-num{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--dim);margin-top:2px;}
+  .cri-sub{font-size:11px;color:var(--dim);margin-top:1px;}
+  .cri-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .cri-amount{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--green);}
+  .cri-dep{font-size:11px;font-weight:600;padding:4px 11px;border-radius:20px;white-space:nowrap;}
+  .cri-dep.today{background:rgba(34,197,94,0.14);color:var(--green);border:1px solid rgba(34,197,94,0.25);}
+  .cri-dep.overdue{background:rgba(239,68,68,0.13);color:var(--red);border:1px solid rgba(239,68,68,0.25);}
+  .cri-dep.upcoming{background:rgba(245,158,11,0.13);color:var(--yellow);border:1px solid rgba(245,158,11,0.25);}
+  .cri-dep.future{background:rgba(56,189,248,0.1);color:var(--cyan);border:1px solid rgba(56,189,248,0.2);}
+  .cri-dep.none{background:rgba(96,112,137,0.1);color:var(--dim);border:1px solid rgba(96,112,137,0.18);}
+
+  /* ── CUSTOMER PROFILE ── */
+  .cust-profile{background:var(--panel);border:1px solid rgba(255,137,0,0.3);border-radius:15px;overflow:hidden;box-shadow:var(--shadow);}
+  .cust-profile-header{padding:22px 26px;background:linear-gradient(135deg,rgba(255,137,0,0.1),rgba(255,137,0,0.03));border-bottom:1px solid rgba(255,137,0,0.16);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+  .cust-avatar{width:56px;height:56px;border-radius:14px;flex-shrink:0;background:linear-gradient(135deg,var(--orange),#cc6e00);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#fff;box-shadow:0 4px 16px rgba(255,137,0,0.4);font-family:'Bebas Neue',sans-serif;}
+  .cust-name{font-size:22px;font-weight:800;}
+  .cust-sub{font-size:12px;color:var(--dim);margin-top:4px;}
+  .cust-stats-row{display:flex;gap:12px;flex-wrap:wrap;}
+  .cust-stat{text-align:center;padding:10px 16px;background:rgba(28,35,51,0.7);border:1px solid var(--border);border-radius:10px;min-width:80px;}
+  .cust-stat .v{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;display:block;}
+  .cust-stat .l{font-size:9px;color:var(--dim);letter-spacing:0.8px;text-transform:uppercase;margin-top:2px;}
+  .cust-checks-wrap{padding:20px 26px;}
+  .cust-checks-title{font-size:11px;font-weight:700;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .cust-checks-title::after{content:'';flex:1;height:1px;background:var(--border);}
+  .cust-check-row{display:grid;grid-template-columns:1fr 100px 110px 110px 110px 90px auto;gap:10px;align-items:center;padding:12px 15px;border-radius:10px;margin:6px 0;background:rgba(28,35,51,0.55);border:1px solid var(--border);transition:all 0.2s;font-size:13px;}
+  .cust-check-row:hover{background:rgba(255,137,0,0.05);border-color:rgba(255,137,0,0.18);}
+  .cust-check-row.today{border-color:rgba(34,197,94,0.35);background:rgba(34,197,94,0.05);}
+  .cust-check-row.overdue{border-color:rgba(239,68,68,0.32);background:rgba(239,68,68,0.05);}
+  .cust-check-row.upcoming{border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.04);}
+  .cust-check-header{display:grid;grid-template-columns:1fr 100px 110px 110px 110px 90px auto;gap:10px;padding:7px 15px;margin-bottom:4px;font-size:10px;font-weight:700;color:var(--dim);letter-spacing:0.8px;text-transform:uppercase;}
+  .ccr-num{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;}
+  .ccr-date{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text2);}
+  .ccr-dep{font-size:12px;font-weight:600;}
+  .ccr-dep.today{color:var(--green);} .ccr-dep.overdue{color:var(--red);} .ccr-dep.upcoming{color:var(--yellow);} .ccr-dep.future{color:var(--cyan);} .ccr-dep.none{color:var(--dim);}
+  .ccr-amount{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:var(--green);}
+  .ccr-bank{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ccr-actions{display:flex;gap:4px;}
+  .cust-total-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;margin-top:10px;background:rgba(255,137,0,0.07);border:1px solid rgba(255,137,0,0.2);border-radius:10px;}
+  .cust-total-label{font-size:12px;font-weight:700;color:var(--orange2);letter-spacing:0.5px;text-transform:uppercase;}
+  .cust-total-amount{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--green);}
+
+  /* ── ALL CHECKS ── */
+  .search-bar{display:flex;gap:9px;margin-bottom:11px;align-items:center;flex-wrap:wrap;}
+  .si-wrap{flex:1;position:relative;min-width:180px;}
+  .si-wrap input{padding-left:34px;}
+  .si-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:13px;}
+  .pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px;}
+  .pill{padding:4px 13px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--dim);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.18s;}
+  .pill:hover{color:var(--text2);border-color:var(--orange);}
+  .pill.active{background:var(--orange);color:#fff;border-color:var(--orange);}
+  .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:12px;}
+  .chk-card{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:17px;backdrop-filter:blur(16px);box-shadow:var(--shadow);position:relative;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s,border-color 0.2s;}
+  .chk-card:hover{transform:translateY(-2px);box-shadow:0 16px 48px rgba(0,0,0,0.5);}
+  .chk-card.ct{border-color:rgba(34,197,94,0.42);}
+  .chk-card.ov{border-color:rgba(239,68,68,0.38);}
+  .chk-card.up{border-color:rgba(245,158,11,0.35);}
+  .chk-card::before{content:'K';font-family:'Bebas Neue',sans-serif;position:absolute;top:-10px;right:10px;font-size:80px;color:var(--orange);opacity:0.04;pointer-events:none;line-height:1;}
+  .chk-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px;}
+  .chk-store{font-weight:700;font-size:14px;}
+  .chk-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);margin-top:2px;}
+  .chk-amount{font-family:'IBM Plex Mono',monospace;font-size:21px;font-weight:600;color:var(--green);margin:8px 0;}
+  .chk-det{font-size:12px;color:var(--dim);margin:3px 0;display:flex;align-items:center;gap:5px;}
+  .chk-det strong{color:var(--text2);font-weight:500;}
+  .dep-row{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:7px;margin:7px 0;font-size:11px;font-weight:600;}
+  .dep-today{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.24);color:var(--green);}
+  .dep-overdue{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--red);}
+  .dep-upcoming{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);color:var(--yellow);}
+  .dep-future{background:rgba(56,189,248,0.07);border:1px solid rgba(56,189,248,0.18);color:var(--cyan);}
+  .dep-cleared{background:rgba(96,112,137,0.08);border:1px solid rgba(96,112,137,0.17);color:var(--dim);}
+  .chk-actions{display:flex;gap:5px;margin-top:11px;flex-wrap:wrap;}
+
+  /* ── BOUNCED ── */
+  .bounced-log{margin-top:11px;padding-top:10px;border-top:1px solid rgba(239,68,68,0.2);}
+  .b-entry{background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.14);border-radius:8px;padding:8px 11px;margin:5px 0;font-size:12px;}
+  .b-date{color:var(--dim);font-size:10px;font-family:'IBM Plex Mono',monospace;}
+  .b-reason{color:var(--red);font-weight:600;margin-top:2px;}
+  .b-note{color:var(--text2);margin-top:2px;font-size:11px;}
+
+  /* ── TODAY / STATS ── */
+  .sec-title{font-size:11px;font-weight:700;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin:16px 0 9px;display:flex;align-items:center;gap:7px;}
+  .sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:14px;}
+  .sc{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;transition:transform 0.2s;}
+  .sc:hover{transform:translateY(-2px);border-color:var(--border2);}
+  .sc .i{font-size:24px;margin-bottom:6px;}
+  .sc .v{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;margin-bottom:4px;}
+  .sc .t{font-size:10px;color:var(--dim);font-weight:600;letter-spacing:0.6px;text-transform:uppercase;}
+  .vg{color:var(--green);}.vr{color:var(--red);}.vo{color:var(--orange2);}.vb{color:var(--cyan);}
+
+  /* ── TABLE ── */
+  .tw{overflow-x:auto;border-radius:9px;border:1px solid var(--border);}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  thead tr{background:rgba(28,35,51,0.9);border-bottom:2px solid rgba(255,137,0,0.18);}
+  th{padding:10px 13px;text-align:left;font-weight:700;color:var(--orange2);font-size:10px;letter-spacing:0.8px;text-transform:uppercase;white-space:nowrap;}
+  tbody tr{border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;}
+  tbody tr:hover{background:rgba(255,137,0,0.04);}
+  td{padding:10px 13px;vertical-align:middle;}
+
+  /* ── MODAL ── */
+  .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.83);z-index:1000;backdrop-filter:blur(10px);align-items:center;justify-content:center;}
+  .mo.open{display:flex;}
+  .md{background:linear-gradient(145deg,var(--bg3),var(--bg2));border:1px solid rgba(255,137,0,0.22);border-radius:17px;padding:24px;width:90%;max-width:470px;box-shadow:0 30px 80px rgba(0,0,0,0.7);animation:mIn 0.26s ease;}
+  @keyframes mIn{from{opacity:0;transform:scale(0.92) translateY(-13px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  .md-title{font-size:15px;font-weight:700;color:var(--orange2);margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+  .md-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:18px;}
+  .chk-prev{background:#f5f0e8;border-radius:9px;padding:17px;color:#1a1a1a;font-family:'IBM Plex Mono',monospace;border:2px solid #ff8900;margin-top:11px;position:relative;overflow:hidden;}
+  .chk-prev::before{content:'K WHOLESALE LLC';position:absolute;bottom:7px;right:10px;font-size:8px;color:rgba(255,137,0,0.25);letter-spacing:1px;font-weight:700;}
+  .cp-label{color:#888;font-size:9px;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:2px;}
+  .cp-val{font-weight:600;font-size:12px;}
+  .cp-amount{font-size:21px;font-weight:700;color:#1a5c1a;margin:5px 0;}
+  .cp-divider{border:none;border-top:1px dashed #ff8900;margin:8px 0;}
+  .cp-g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;}
+
+  /* ── LOADING ── */
+  .loading-overlay{position:fixed;inset:0;background:rgba(7,17,31,0.85);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(8px);}
+  .loading-overlay.hide{display:none;}
+  .loading-spinner{width:48px;height:48px;border:4px solid rgba(255,137,0,0.2);border-top-color:var(--orange);border-radius:50%;animation:spin 0.8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{color:var(--orange2);font-size:14px;font-weight:600;}
+
+  .empty-state{text-align:center;padding:48px 20px;color:var(--dim);}
+  .empty-state .e{font-size:44px;margin-bottom:10px;}
+  .no-cust{text-align:center;padding:40px 20px;color:var(--dim);}
+  .no-cust .e{font-size:40px;margin-bottom:10px;}
+
+  /* ── TOAST ── */
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(120px);background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--orange);color:var(--text);padding:10px 20px;border-radius:40px;font-size:13px;font-weight:600;z-index:9999;transition:transform 0.38s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 10px 40px rgba(0,0,0,0.5);white-space:nowrap;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+
+  ::-webkit-scrollbar{width:5px;height:5px;}
+  ::-webkit-scrollbar-track{background:var(--bg);}
+  ::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--orange);}
+
+  @media(max-width:900px){
+    header{flex-direction:column;gap:14px;}
+    .hdr-stats{justify-content:center;}
+    .brand-divider{display:none;}
+    .tabs{overflow-x:auto;}
+    .tab{font-size:11px;padding:8px 9px;flex-shrink:0;}
+    .grid{grid-template-columns:1fr;}
+    .stype-btn .stype-desc{display:none;}
+    .cust-check-row,.cust-check-header{grid-template-columns:1fr 90px 95px 90px auto;}
+    .cust-check-row .ccr-bank,.cust-check-header .h-bank{display:none;}
+    .cust-check-row .ccr-date,.cust-check-header .h-date{display:none;}
+    .cp-g3{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Connecting to Cloud...</div>
+</div>
+
+<div class="app">
+
+<!-- ── SYNC BAR ── -->
+<div class="sync-bar">
+  <div class="sync-indicator">
+    <div class="sync-dot offline" id="syncDot"></div>
+    <span class="sync-text" id="syncText">Connecting...</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="sync-time" id="syncTime"></span>
+    <button class="sync-btn" onclick="loadFromCloud()">↻ Refresh</button>
+  </div>
+</div>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="brand">
+    <div class="logo-mark"><span class="logo-k">K</span></div>
+    <div>
+      <div class="brand-name">K WHOLESALE LLC</div>
+      <div class="brand-sub">Premium Distribution · Cloud Sync Active</div>
+    </div>
+    <div class="brand-divider"></div>
+    <div class="system-label">
+      <span class="s1">Check Management System</span>
+      <span class="s2">Real-Time Cloud · All Devices</span>
+    </div>
+  </div>
+  <div class="hdr-stats">
+    <div class="stat-pill"><span class="num" id="h-total">0</span><span class="lbl">Checks</span></div>
+    <div class="stat-pill"><span class="num" id="h-customers" style="color:var(--orange2);">0</span><span class="lbl">Customers</span></div>
+    <div class="stat-pill"><span class="num" id="h-amount" style="color:var(--green);">$0</span><span class="lbl">Total</span></div>
+    <div class="stat-pill"><span class="num" id="h-today" style="color:var(--green);">0</span><span class="lbl">Due Today</span></div>
+    <div class="stat-pill"><span class="num" id="h-bounced" style="color:var(--red);">0</span><span class="lbl">Bounced</span></div>
+  </div>
+</header>
+
+<!-- DATE BAR -->
+<div class="date-bar">
+  <div class="date-bar-left">
+    <span class="date-cal">📅</span>
+    <span class="date-label">Today:</span>
+    <span class="date-today" id="date-today"></span>
+  </div>
+  <span class="date-bar-right">K WHOLESALE LLC · Check Management</span>
+</div>
+
+<!-- BANNERS -->
+<div class="today-banner" id="bToday">
+  <div class="banner-head" onclick="toggleB('bToday')">
+    <div class="banner-title"><span class="pulse-dot"></span>🏦 Checks Hitting the Bank TODAY <span id="bTodayCount" style="background:rgba(34,197,94,0.12);padding:2px 9px;border-radius:12px;font-size:11px;"></span></div>
+    <div style="display:flex;align-items:center;gap:10px;"><span id="bTodayAmt" style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--green);background:rgba(34,197,94,0.1);padding:3px 11px;border-radius:20px;border:1px solid rgba(34,197,94,0.2);"></span><span class="chevron">▾</span></div>
+  </div>
+  <div class="banner-body" id="bTodayBody"></div>
+</div>
+<div class="overdue-banner" id="bOverdue">
+  <div class="banner-head" onclick="toggleB('bOverdue')">
+    <div class="banner-title">⚠️ Overdue <span id="bOverdueCount" style="background:rgba(239,68,68,0.12);padding:2px 9px;border-radius:12px;font-size:11px;"></span></div>
+    <span class="chevron">▾</span>
+  </div>
+  <div class="banner-body" id="bOverdueBody"></div>
+</div>
+<div class="upcoming-banner" id="bUpcoming">
+  <div class="banner-head" onclick="toggleB('bUpcoming')">
+    <div class="banner-title">🔔 Upcoming — Next 7 Days <span id="bUpcomingCount" style="background:rgba(245,158,11,0.12);padding:2px 9px;border-radius:12px;font-size:11px;"></span></div>
+    <span class="chevron">▾</span>
+  </div>
+  <div class="banner-body" id="bUpcomingBody"></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="showTab('add',this)">➕ New Check</button>
+  <button class="tab" onclick="showTab('customer',this)" id="tab-cust">🔍 Search</button>
+  <button class="tab" onclick="showTab('checks',this)">📋 All Checks</button>
+  <button class="tab" onclick="showTab('today',this)" id="tab-today">📅 Today</button>
+  <button class="tab" onclick="showTab('bounced',this)">🔴 Bounced</button>
+  <button class="tab" onclick="showTab('stats',this)">📊 Dashboard</button>
+</div>
+
+<!-- ADD CHECK -->
+<div class="panel active" id="panel-add">
+  <div class="card">
+    <div class="card-title">📝 New Check Entry</div>
+    <div class="grid">
+      <div class="fg"><label>🏪 Store / Customer Name</label><input type="text" id="f-store" placeholder="e.g. ABC Grocery" list="store-list"/><datalist id="store-list"></datalist></div>
+      <div class="fg"><label>📍 Address</label><input type="text" id="f-address" placeholder="123 Main St, Miami FL"/></div>
+      <div class="fg"><label>💰 Amount ($)</label><input type="number" id="f-amount" placeholder="0.00" step="0.01" min="0" class="mono"/></div>
+      <div class="fg"><label>🔢 Check Number</label><input type="text" id="f-checknum" class="mono" placeholder="e.g. 1042"/></div>
+      <div class="fg"><label>🏛️ Routing Number</label><input type="text" id="f-routing" class="mono" placeholder="9-digit ABA" maxlength="9"/></div>
+      <div class="fg"><label>💳 Account Number</label><input type="text" id="f-account" class="mono" placeholder="Account number"/></div>
+      <div class="fg"><label>📋 Check Date</label><input type="date" id="f-date"/></div>
+      <div class="fg"><label class="g">🏦 Deposit / Due Date ★</label><input type="date" id="f-deposit"/></div>
+      <div class="fg"><label>🏦 Bank Name</label><input type="text" id="f-bank" placeholder="e.g. Bank of America"/></div>
+      <div class="fg"><label>📊 Status</label>
+        <select id="f-status">
+          <option value="pending">⏳ Pending</option>
+          <option value="active">✅ Active</option>
+          <option value="cleared">🔵 Cleared</option>
+          <option value="bounced">🔴 Bounced</option>
+        </select>
+      </div>
+      <div class="fg"><label>📞 Phone</label><input type="text" id="f-phone" placeholder="Customer phone"/></div>
+      <div class="fg full"><label>📝 Notes</label><textarea id="f-notes" rows="2" placeholder="Additional notes..."></textarea></div>
+    </div>
+    <div style="display:flex;gap:9px;margin-top:16px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="addCheck()">💾 Save Check</button>
+      <button class="btn btn-cancel" onclick="clearForm()">🗑 Clear</button>
+    </div>
+  </div>
+</div>
+
+<!-- SEARCH -->
+<div class="panel" id="panel-customer">
+  <div class="card">
+    <div class="card-title">🔍 Smart Search</div>
+    <div class="search-type-bar">
+      <button class="stype-btn active" id="st-name" onclick="setSearchType('name')">
+        <span>🏪</span><span><span style="font-size:13px;">Store Name</span><span class="stype-desc">Customer profile</span></span>
+      </button>
+      <button class="stype-btn" id="st-check" onclick="setSearchType('check')">
+        <span>🔢</span><span><span style="font-size:13px;">Check Number</span><span class="stype-desc">Find specific check</span></span>
+      </button>
+      <button class="stype-btn" id="st-amount" onclick="setSearchType('amount')">
+        <span>💰</span><span><span style="font-size:13px;">Amount</span><span class="stype-desc">Search by amount</span></span>
+      </button>
+    </div>
+    <div class="cust-search-wrap" id="search-input-wrap">
+      <span class="cust-search-icon" id="search-icon">🏪</span>
+      <input type="text" class="cust-search-input" id="custSearch" placeholder="Type store or customer name..." oninput="onSearch()" autocomplete="off"/>
+      <button class="cust-search-clear" id="custClear" onclick="clearSearch()">✕</button>
+      <div class="cust-suggestions" id="custSug"></div>
+    </div>
+    <div id="amount-range-wrap" style="display:none;">
+      <div class="amount-range">
+        <div class="fg" style="flex:1;"><label>Min ($)</label><input type="number" id="amt-min" placeholder="0.00" step="0.01" min="0" class="mono" oninput="onSearch()"/></div>
+        <span style="margin-top:22px;">—</span>
+        <div class="fg" style="flex:1;"><label>Max ($)</label><input type="number" id="amt-max" placeholder="Any" step="0.01" min="0" class="mono" oninput="onSearch()"/></div>
+        <button class="btn btn-primary" onclick="onSearch()" style="margin-top:18px;">🔍 Search</button>
+      </div>
+    </div>
+    <div id="custResult"><div class="no-cust"><div class="e">🔍</div><p>Choose a search type and start typing</p></div></div>
+  </div>
+</div>
+
+<!-- ALL CHECKS -->
+<div class="panel" id="panel-checks">
+  <div class="card" style="padding:17px;">
+    <div class="search-bar">
+      <div class="si-wrap"><span class="si-icon">🔍</span><input type="text" id="si" placeholder="Search name, check #, bank..." oninput="renderChecks()"/></div>
+      <select id="sortSel" onchange="renderChecks()" style="width:auto;">
+        <option value="dep-asc">Deposit Date ↑ Soonest</option>
+        <option value="dep-desc">Deposit Date ↓ Latest</option>
+        <option value="date-desc">Check Date: Newest</option>
+        <option value="amt-desc">Amount: High→Low</option>
+        <option value="amt-asc">Amount: Low→High</option>
+        <option value="name">Name A–Z</option>
+      </select>
+    </div>
+    <div class="pills">
+      <button class="pill active" onclick="setF('all',this)">All</button>
+      <button class="pill" onclick="setF('today',this)">📅 Today</button>
+      <button class="pill" onclick="setF('overdue',this)">⚠️ Overdue</button>
+      <button class="pill" onclick="setF('upcoming',this)">🔔 Next 7d</button>
+      <button class="pill" onclick="setF('pending',this)">⏳ Pending</button>
+      <button class="pill" onclick="setF('cleared',this)">🔵 Cleared</button>
+      <button class="pill" onclick="setF('bounced',this)">🔴 Bounced</button>
+    </div>
+    <div id="checksContainer"></div>
+  </div>
+</div>
+
+<!-- TODAY -->
+<div class="panel" id="panel-today">
+  <div class="card" style="padding:17px;">
+    <div class="card-title" style="color:var(--green);">📅 Today's Bank Schedule — <span id="todayLabel" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--green);"></span></div>
+    <div id="todayContainer"></div>
+  </div>
+</div>
+
+<!-- BOUNCED -->
+<div class="panel" id="panel-bounced">
+  <div class="card" style="padding:17px;">
+    <div class="card-title" style="color:var(--red);">🔴 Bounced Check Log</div>
+    <div id="bouncedContainer"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="panel" id="panel-stats">
+  <div class="stats-grid" id="statsGrid"></div>
+  <div class="card" style="padding:17px;margin-bottom:13px;">
+    <div class="card-title">📅 Upcoming Deposits — Next 30 Days</div>
+    <div id="upcomingSched"></div>
+  </div>
+  <div class="card" style="padding:17px;">
+    <div class="card-title">👥 All Customers</div>
+    <div id="customersSummary"></div>
+  </div>
+</div>
+
+</div>
+
+<!-- BOUNCE MODAL -->
+<div class="mo" id="moBounce">
+  <div class="md">
+    <div class="md-title">🔴 Log Bounced Check</div>
+    <input type="hidden" id="mBounceId"/>
+    <div class="fg" style="margin-bottom:12px;"><label>Reason</label>
+      <select id="mBounceReason">
+        <option>NSF – Non-Sufficient Funds</option>
+        <option>Account Closed</option>
+        <option>Stop Payment</option>
+        <option>Signature Mismatch</option>
+        <option>Stale / Expired Check</option>
+        <option>Refer to Maker</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="fg" style="margin-bottom:12px;"><label>Return Date</label><input type="date" id="mBounceDate"/></div>
+    <div class="fg"><label>Notes</label><textarea id="mBounceNote" rows="3" placeholder="Details..."></textarea></div>
+    <div class="md-actions">
+      <button class="btn btn-cancel" onclick="closeMo('moBounce')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmBounce()">🔴 Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW MODAL -->
+<div class="mo" id="moView">
+  <div class="md" style="max-width:530px;">
+    <div class="md-title">📄 Check Details</div>
+    <div id="moViewContent"></div>
+    <div class="md-actions"><button class="btn btn-cancel" onclick="closeMo('moView')">Close</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// SUPABASE CONFIG
+// ══════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://tcdqevsjqsqkbkitkutn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZHFldnNqcXNxa2JraXRrdXRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2ODc3NDcsImV4cCI6MjA5MzI2Mzc0N30.Thz7eLoirSyevrDAZFaAVcsc4McLWoL5QVeumJgmHVE';
+const HEADERS = { 'Content-Type':'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer '+SUPABASE_KEY };
+
+async function dbFetch(path, opts={}) {
+  const res = await fetch(SUPABASE_URL+'/rest/v1/'+path, { headers: HEADERS, ...opts });
+  if (!res.ok) { const e = await res.text(); throw new Error(e); }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+// ── DATA ──────────────────────────────────────────────────────────────────────
+let checks = [];
+let curFilter = 'all';
+let searchType = 'name';
+let isOnline = false;
+
+// ── CLOUD SYNC ────────────────────────────────────────────────────────────────
+function setSyncStatus(status, msg) {
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncText');
+  dot.className = 'sync-dot ' + status;
+  txt.textContent = msg;
+  isOnline = status === 'online';
+}
+
+async function loadFromCloud() {
+  setSyncStatus('syncing', 'Syncing...');
+  try {
+    const data = await dbFetch('checks?order=createdAt.desc&select=*');
+    checks = (data || []).map(r => ({
+      ...r,
+      bounces: Array.isArray(r.bounces) ? r.bounces : (r.bounces ? JSON.parse(r.bounces) : [])
+    }));
+    setSyncStatus('online', '☁️ Cloud Sync Active');
+    document.getElementById('syncTime').textContent = 'Last sync: '+new Date().toLocaleTimeString();
+    refreshAll();
+  } catch(e) {
+    setSyncStatus('offline', '⚠️ Offline — changes saved locally');
+    // fallback to localStorage
+    const local = localStorage.getItem('kwh_local');
+    if(local) checks = JSON.parse(local);
+    refreshAll();
+  }
+}
+
+async function saveToCloud(check) {
+  const payload = {
+    id: check.id, store: check.store, amount: check.amount,
+    checknum: check.checknum, address: check.address,
+    routing: check.routing, account: check.account,
+    date: check.date, depositDate: check.depositDate,
+    bank: check.bank, status: check.status,
+    phone: check.phone, notes: check.notes,
+    createdAt: check.createdAt,
+    bounces: check.bounces
+  };
+
+  try {
+    await dbFetch('checks', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { ...HEADERS, 'Prefer': 'resolution=merge-duplicates' }
+    });
+    setSyncStatus('online', '☁️ Saved to Cloud');
+    document.getElementById('syncTime').textContent = 'Last sync: '+new Date().toLocaleTimeString();
+  } catch(e) {
+    setSyncStatus('offline', '⚠️ Saved locally — will sync when online');
+    localStorage.setItem('kwh_local', JSON.stringify(checks));
+  }
+}
+
+async function updateInCloud(check) {
+  const payload = {
+    store: check.store, amount: check.amount,
+    checknum: check.checknum, address: check.address,
+    routing: check.routing, account: check.account,
+    date: check.date, depositDate: check.depositDate,
+    bank: check.bank, status: check.status,
+    phone: check.phone, notes: check.notes,
+    bounces: check.bounces
+  };
+
+  try {
+    await dbFetch('checks?id=eq.'+check.id, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+      headers: { ...HEADERS, 'Prefer': 'return=minimal' }
+    });
+    setSyncStatus('online', '☁️ Updated in Cloud');
+    document.getElementById('syncTime').textContent = 'Last sync: '+new Date().toLocaleTimeString();
+  } catch(e) {
+    setSyncStatus('offline', '⚠️ Saved locally');
+    localStorage.setItem('kwh_local', JSON.stringify(checks));
+  }
+}
+
+async function deleteFromCloud(id) {
+  try {
+    await dbFetch('checks?id=eq.'+id, { method: 'DELETE', headers: { ...HEADERS, 'Prefer': 'return=minimal' } });
+    setSyncStatus('online', '☁️ Deleted from Cloud');
+  } catch(e) {
+    setSyncStatus('offline', '⚠️ Saved locally');
+    localStorage.setItem('kwh_local', JSON.stringify(checks));
+  }
+}
+
+function refreshAll() {
+  refreshAlerts(); updateHeader(); refreshStoreList();
+  const active = document.querySelector('.panel.active');
+  if(active) {
+    const id = active.id;
+    if(id==='panel-checks')  renderChecks();
+    if(id==='panel-today')   renderToday();
+    if(id==='panel-bounced') renderBounced();
+    if(id==='panel-stats')   renderStats();
+  }
+  document.getElementById('loadingOverlay').classList.add('hide');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const todayStr = () => new Date().toISOString().split('T')[0];
+function ddiff(a,b){ return Math.round((new Date(a)-new Date(b))/86400000); }
+function dStatus(c){
+  if(!c.depositDate||c.status==='cleared') return 'none';
+  const d=ddiff(c.depositDate,todayStr());
+  if(d===0) return 'today'; if(d<0) return 'overdue'; if(d<=7) return 'upcoming'; return 'future';
+}
+function fmtD(d){ if(!d) return '—'; const [y,m,day]=d.split('-'); return `${m}/${day}/${y}`; }
+function fmtLong(d){ if(!d) return ''; return new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
+function fmt(n){ return parseFloat(n||0).toLocaleString('en-US',{minimumFractionDigits:2}); }
+function mask(n){ return n&&n.length>4?'****'+n.slice(-4):(n||'—'); }
+function initial(name){ return (name||'?').trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function showTab(name,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  el.classList.add('active');
+  if(name==='checks')  renderChecks();
+  if(name==='today')   renderToday();
+  if(name==='bounced') renderBounced();
+  if(name==='stats')   renderStats();
+}
+
+// ── STORE LIST ────────────────────────────────────────────────────────────────
+function refreshStoreList(){
+  const names=[...new Set(checks.map(c=>c.store))].sort();
+  document.getElementById('store-list').innerHTML=names.map(n=>`<option value="${n}">`).join('');
+}
+
+// ── ADD CHECK ─────────────────────────────────────────────────────────────────
+async function addCheck(){
+  const store=document.getElementById('f-store').value.trim();
+  const amount=parseFloat(document.getElementById('f-amount').value);
+  const checknum=document.getElementById('f-checknum').value.trim();
+  if(!store||!checknum||isNaN(amount)||amount<=0){ showToast('⚠️ Required: Store Name, Check #, Amount'); return; }
+
+  const check = {
+    id: Date.now().toString(), store, amount, checknum,
+    address: document.getElementById('f-address').value.trim(),
+    routing: document.getElementById('f-routing').value.trim(),
+    account: document.getElementById('f-account').value.trim(),
+    date: document.getElementById('f-date').value||todayStr(),
+    depositDate: document.getElementById('f-deposit').value||'',
+    bank: document.getElementById('f-bank').value.trim(),
+    status: document.getElementById('f-status').value,
+    phone: document.getElementById('f-phone').value.trim(),
+    notes: document.getElementById('f-notes').value.trim(),
+    createdAt: new Date().toISOString(),
+    bounces: []
+  };
+
+  checks.unshift(check);
+  refreshAll();
+  clearForm();
+  showToast('💾 Saving to cloud...');
+  await saveToCloud(check);
+  showToast('✅ Check saved to cloud!');
+}
+
+function clearForm(){
+  ['f-store','f-address','f-amount','f-checknum','f-routing','f-account','f-bank','f-phone','f-notes']
+    .forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-date').value=todayStr();
+  document.getElementById('f-deposit').value='';
+  document.getElementById('f-status').value='pending';
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
+async function markCleared(id){
+  const c=checks.find(x=>x.id===id); if(!c) return;
+  c.status='cleared';
+  refreshAll(); renderChecks();
+  showToast('💾 Updating...');
+  await updateInCloud(c);
+  showToast('✅ Marked as Cleared');
+}
+
+async function deleteCheck(id){
+  if(!confirm('Delete this check? This cannot be undone.')) return;
+  checks=checks.filter(c=>c.id!==id);
+  refreshAll(); renderChecks();
+  showToast('🗑 Deleting...');
+  await deleteFromCloud(id);
+  showToast('🗑 Deleted');
+}
+
+// ── SEARCH ────────────────────────────────────────────────────────────────────
+function setSearchType(type){
+  searchType=type;
+  document.querySelectorAll('.stype-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('st-'+type).classList.add('active');
+  const inp=document.getElementById('custSearch');
+  const icon=document.getElementById('search-icon');
+  const amtWrap=document.getElementById('amount-range-wrap');
+  const searchWrap=document.getElementById('search-input-wrap');
+  if(type==='name'){ icon.textContent='🏪'; inp.placeholder='Type store or customer name...'; searchWrap.style.display='block'; amtWrap.style.display='none'; }
+  else if(type==='check'){ icon.textContent='🔢'; inp.placeholder='Type check number...'; searchWrap.style.display='block'; amtWrap.style.display='none'; }
+  else if(type==='amount'){ searchWrap.style.display='none'; amtWrap.style.display='block'; }
+  clearSearch();
+}
+
+function onSearch(){
+  const q=document.getElementById('custSearch').value.trim();
+  document.getElementById('custClear').classList.toggle('show',q.length>0);
+  document.getElementById('custSug').classList.remove('open');
+  if(searchType==='name') searchByName(q);
+  else if(searchType==='check') searchByCheck(q);
+  else if(searchType==='amount') searchByAmountRange();
+}
+
+function getCustomers(){
+  const map={};
+  checks.forEach(c=>{
+    if(!map[c.store]) map[c.store]={name:c.store,phone:c.phone,address:c.address,checks:[]};
+    if(c.phone&&!map[c.store].phone) map[c.store].phone=c.phone;
+    map[c.store].checks.push(c);
+  });
+  return map;
+}
+
+function searchByName(q){
+  const sug=document.getElementById('custSug');
+  const res=document.getElementById('custResult');
+  if(!q){ res.innerHTML=`<div class="no-cust"><div class="e">🏪</div><p>Type a customer name to view their full check history</p></div>`; return; }
+  const customers=getCustomers();
+  const matches=Object.values(customers).filter(c=>c.name.toLowerCase().includes(q.toLowerCase()));
+  if(!matches.length){ sug.innerHTML=`<div class="cust-sug-item" style="color:var(--dim);">No customers found</div>`; sug.classList.add('open'); res.innerHTML=`<div class="no-cust"><div class="e">🔍</div><p>No customer named "${q}"</p></div>`; return; }
+  sug.innerHTML=matches.slice(0,8).map(c=>{
+    const tot=c.checks.reduce((s,x)=>s+x.amount,0);
+    const bounced=c.checks.filter(x=>x.bounces?.length>0).length;
+    return `<div class="cust-sug-item" onclick="selectCustomer('${c.name.replace(/'/g,"\\'").replace(/"/g,"&quot;")}')">
+      <div class="cust-sug-left"><div class="cust-sug-avatar">${initial(c.name)}</div>
+      <div><div class="cust-sug-name">${c.name}</div><div class="cust-sug-phone">${c.phone?'📞 '+c.phone:''}</div></div></div>
+      <div class="cust-sug-meta"><span class="sug-count">${c.checks.length} checks</span>${bounced?`<span class="badge b-bounced" style="font-size:9px;">🔴 ${bounced}</span>`:''}<span class="sug-amount">$${fmt(tot)}</span></div>
+    </div>`;
+  }).join('');
+  sug.classList.add('open');
+  if(matches.length===1) renderCustProfile(matches[0].name);
+  else res.innerHTML=`<div class="no-cust"><div class="e">👆</div><p>Select a customer above</p></div>`;
+}
+
+function selectCustomer(name){
+  document.getElementById('custSearch').value=name;
+  document.getElementById('custSug').classList.remove('open');
+  document.getElementById('custClear').classList.add('show');
+  renderCustProfile(name);
+}
+
+function renderCustProfile(name){
+  const el=document.getElementById('custResult');
+  const customers=getCustomers();
+  const cust=customers[name];
+  if(!cust){ el.innerHTML=`<div class="no-cust"><div class="e">🔍</div><p>Customer not found</p></div>`; return; }
+  const chks=cust.checks.sort((a,b)=>(b.depositDate||b.date)<(a.depositDate||a.date)?-1:1);
+  const totalAmt=chks.reduce((s,c)=>s+c.amount,0);
+  const bounced=chks.filter(c=>c.bounces?.length>0).length;
+  const cleared=chks.filter(c=>c.status==='cleared').length;
+  const pending=chks.filter(c=>c.status==='pending'||c.status==='active').length;
+  const lastC=chks[0]; const firstC=chks[chks.length-1];
+  const avatarBg=bounced>2?'linear-gradient(135deg,#ef4444,#b91c1c)':bounced>0?'linear-gradient(135deg,#f59e0b,#b45309)':'linear-gradient(135deg,var(--orange),#cc6e00)';
+
+  el.innerHTML=`<div class="cust-profile">
+    <div class="cust-profile-header">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div class="cust-avatar" style="background:${avatarBg};">${initial(name)}</div>
+        <div><div class="cust-name">${name}</div>
+        <div class="cust-sub">${cust.phone?'📞 '+cust.phone:''}${cust.address?' · 📍 '+cust.address:''}</div>
+        <div style="margin-top:5px;font-size:11px;color:var(--dim);">First: ${fmtD(firstC.date)} · Latest: ${fmtD(lastC.date)}</div></div>
+      </div>
+      <div class="cust-stats-row">
+        <div class="cust-stat"><span class="v" style="color:var(--orange2);">${chks.length}</span><span class="l">Checks</span></div>
+        <div class="cust-stat"><span class="v" style="color:var(--green);">$${totalAmt.toLocaleString('en-US',{maximumFractionDigits:0})}</span><span class="l">Total</span></div>
+        <div class="cust-stat"><span class="v" style="color:var(--cyan);">${cleared}</span><span class="l">Cleared</span></div>
+        <div class="cust-stat"><span class="v" style="color:var(--yellow);">${pending}</span><span class="l">Pending</span></div>
+        <div class="cust-stat"><span class="v" style="color:${bounced>0?'var(--red)':'var(--green)'};">${bounced}</span><span class="l">Bounced</span></div>
+      </div>
+    </div>
+    <div class="cust-checks-wrap">
+      <div class="cust-checks-title">Full Check History (${chks.length})</div>
+      <div class="cust-check-header"><div>Check #</div><div class="h-date">Written</div><div>Deposit Date</div><div>Amount</div><div class="h-bank">Bank</div><div>Status</div><div>Actions</div></div>
+      ${chks.map(c=>{
+        const ds=dStatus(c);
+        const rc=ds==='today'?'today':ds==='overdue'?'overdue':ds==='upcoming'?'upcoming':'';
+        const depTxt=!c.depositDate?'<span style="color:var(--dim);">—</span>':
+          ds==='today'?`<span class="ccr-dep today">🏦 TODAY</span>`:
+          ds==='overdue'?`<span class="ccr-dep overdue">⚠️ ${fmtD(c.depositDate)}<br><small>${Math.abs(ddiff(c.depositDate,todayStr()))}d late</small></span>`:
+          ds==='upcoming'?`<span class="ccr-dep upcoming">🔔 ${fmtD(c.depositDate)}<br><small>in ${ddiff(c.depositDate,todayStr())}d</small></span>`:
+          `<span class="ccr-dep future">${fmtD(c.depositDate)}</span>`;
+        const bb=c.bounces?.length?`<span class="badge b-bounced" style="font-size:9px;">🔴 ${c.bounces.length}x</span>`:'';
+        return`<div class="cust-check-row ${rc}">
+          <div><div class="ccr-num"># ${c.checknum}</div>${c.notes?`<div style="font-size:11px;color:var(--dim);">📝 ${c.notes}</div>`:''}</div>
+          <div class="ccr-date h-date">${fmtD(c.date)}</div>
+          <div>${depTxt}</div>
+          <div class="ccr-amount">$${fmt(c.amount)}</div>
+          <div class="ccr-bank h-bank">${c.bank||'—'}</div>
+          <div>${statusBadge[c.status]||''} ${bb}</div>
+          <div class="ccr-actions">
+            <button class="btn btn-sm btn-blue" onclick="viewCheck('${c.id}')">👁</button>
+            ${c.status!=='bounced'?`<button class="btn btn-sm btn-warning" onclick="openBounce('${c.id}')">🔴</button>`:''}
+            ${c.status!=='cleared'?`<button class="btn btn-sm btn-success" onclick="markCleared('${c.id}').then(()=>selectCustomer('${name.replace(/'/g,"\\'")}'))" >✅</button>`:''}
+          </div>
+        </div>`;
+      }).join('')}
+      <div class="cust-total-row"><div class="cust-total-label">💰 Grand Total — ${chks.length} Checks</div><div class="cust-total-amount">$${fmt(totalAmt)}</div></div>
+      ${bounced>0?`<div style="margin-top:14px;padding:13px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);border-radius:10px;">
+        <div style="font-size:10px;font-weight:700;color:var(--red);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:9px;">⚠️ Bounced Details</div>
+        ${chks.filter(c=>c.bounces?.length>0).map(c=>c.bounces.map(b=>`
+          <div class="b-entry"><div style="display:flex;justify-content:space-between;"><div><span style="font-weight:700;">Check #${c.checknum}</span> · $${fmt(c.amount)}</div><div class="b-date">${b.date}</div></div>
+          <div class="b-reason">${b.reason}</div>${b.note?`<div class="b-note">📝 ${b.note}</div>`:''}</div>`).join('')).join('')}
+      </div>`:''}
+    </div>
+  </div>`;
+}
+
+function searchByCheck(q){
+  const el=document.getElementById('custResult');
+  if(!q){ el.innerHTML=`<div class="no-cust"><div class="e">🔢</div><p>Type a check number</p></div>`; return; }
+  const found=checks.filter(c=>c.checknum.includes(q));
+  if(!found.length){ el.innerHTML=`<div class="no-cust"><div class="e">🔍</div><p>No check found with # "${q}"</p></div>`; return; }
+  renderCheckResultList(found,`🔢 Check # "${q}" — ${found.length} result${found.length!==1?'s':''}`);
+}
+
+function searchByAmountRange(){
+  const min=parseFloat(document.getElementById('amt-min').value)||0;
+  const max=parseFloat(document.getElementById('amt-max').value)||Infinity;
+  const found=checks.filter(c=>c.amount>=min&&c.amount<=max);
+  const el=document.getElementById('custResult');
+  if(!found.length){ el.innerHTML=`<div class="no-cust"><div class="e">💰</div><p>No checks in this range</p></div>`; return; }
+  renderCheckResultList(found,`💰 $${fmt(min)} – ${max===Infinity?'Any':'$'+fmt(max)} — ${found.length} result${found.length!==1?'s':''}`);
+}
+
+function renderCheckResultList(list,title){
+  const el=document.getElementById('custResult');
+  const total=list.reduce((s,c)=>s+c.amount,0);
+  const sorted=list.sort((a,b)=>(b.depositDate||b.date)<(a.depositDate||a.date)?-1:1);
+  el.innerHTML=`<div style="margin-bottom:14px;padding:12px 16px;background:rgba(255,137,0,0.08);border:1px solid rgba(255,137,0,0.22);border-radius:11px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:9px;">
+    <div style="font-weight:700;font-size:13px;color:var(--orange2);">${title}</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--green);">Total: $${fmt(total)}</div></div>
+    ${sorted.map(c=>{
+      const ds=dStatus(c);const rc=ds==='today'?'ct':ds==='overdue'?'ov':ds==='upcoming'?'up':'';
+      const depLabel=!c.depositDate?`<span class="cri-dep none">No deposit date</span>`:
+        ds==='today'?`<span class="cri-dep today">🏦 TODAY</span>`:
+        ds==='overdue'?`<span class="cri-dep overdue">⚠️ ${fmtD(c.depositDate)} · ${Math.abs(ddiff(c.depositDate,todayStr()))}d late</span>`:
+        ds==='upcoming'?`<span class="cri-dep upcoming">🔔 ${fmtD(c.depositDate)} · in ${ddiff(c.depositDate,todayStr())}d</span>`:
+        `<span class="cri-dep future">📅 ${fmtD(c.depositDate)}</span>`;
+      const bb=c.bounces?.length?`<span class="badge b-bounced" style="font-size:10px;">🔴 ${c.bounces.length}x</span>`:'';
+      return`<div class="check-result-item ${rc}">
+        <div class="cri-left"><div class="cri-icon">🏦</div>
+        <div><div class="cri-store">${c.store}</div><div class="cri-num">Check # ${c.checknum}${c.bank?' · '+c.bank:''}</div>
+        <div class="cri-sub">📋 ${fmtD(c.date)}${c.phone?' · 📞 '+c.phone:''}</div></div></div>
+        <div class="cri-right">${depLabel} ${bb} ${statusBadge[c.status]||''}
+        <div class="cri-amount">$${fmt(c.amount)}</div>
+        <button class="btn btn-sm btn-blue" onclick="viewCheck('${c.id}')">👁</button>
+        <button class="btn btn-sm btn-orange" onclick="selectCustomer('${c.store.replace(/'/g,"\\'")}');setSearchType('name');document.getElementById('custSearch').value='${c.store.replace(/'/g,"\\'")}'" >👤</button>
+        </div></div>`;
+    }).join('')}`;
+}
+
+function clearSearch(){
+  document.getElementById('custSearch').value='';
+  document.getElementById('custClear').classList.remove('show');
+  document.getElementById('custSug').classList.remove('open');
+  document.getElementById('amt-min').value='';
+  document.getElementById('amt-max').value='';
+  document.getElementById('custResult').innerHTML=`<div class="no-cust"><div class="e">🔍</div><p>Choose a search type and start typing</p></div>`;
+}
+
+// ── BANNERS ───────────────────────────────────────────────────────────────────
+function refreshAlerts(){
+  const tStr=todayStr();
+  const dt=checks.filter(c=>c.status!=='cleared'&&c.status!=='bounced'&&dStatus(c)==='today');
+  const ov=checks.filter(c=>c.status!=='cleared'&&dStatus(c)==='overdue');
+  const up=checks.filter(c=>c.status!=='cleared'&&dStatus(c)==='upcoming');
+
+  document.getElementById('bToday').classList.toggle('has',dt.length>0);
+  document.getElementById('bTodayCount').textContent=`${dt.length} check${dt.length!==1?'s':''}`;
+  document.getElementById('bTodayAmt').textContent=`$${fmt(dt.reduce((s,c)=>s+c.amount,0))}`;
+  document.getElementById('bTodayBody').innerHTML=dt.map(c=>`
+    <div class="today-row">
+      <div><div style="font-weight:700;font-size:13px;">🏦 ${c.store}</div>
+      <div style="font-size:11px;color:var(--dim);">Check #${c.checknum}${c.bank?' · '+c.bank:''}${c.phone?' · 📞 '+c.phone:''}</div></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:var(--green);">$${fmt(c.amount)}</span>
+        <button class="btn btn-sm btn-success" onclick="markCleared('${c.id}')">✅ Cleared</button>
+        <button class="btn btn-sm btn-danger"  onclick="openBounce('${c.id}')">🔴</button>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('bOverdue').classList.toggle('has',ov.length>0);
+  document.getElementById('bOverdueCount').textContent=ov.length;
+  document.getElementById('bOverdueBody').innerHTML=ov.map(c=>{const d=Math.abs(ddiff(c.depositDate,tStr));return`
+    <div class="alert-row overdue"><div><div class="ar-name">${c.store}</div><div class="ar-sub">Check #${c.checknum} · Due ${fmtD(c.depositDate)}</div></div>
+    <div style="display:flex;gap:7px;align-items:center;"><span class="ar-days overdue">${d}d late</span><span style="font-family:'IBM Plex Mono',monospace;color:var(--red);font-weight:600;">$${fmt(c.amount)}</span></div></div>`;}).join('');
+
+  document.getElementById('bUpcoming').classList.toggle('has',up.length>0);
+  document.getElementById('bUpcomingCount').textContent=up.length;
+  document.getElementById('bUpcomingBody').innerHTML=up.map(c=>{const d=ddiff(c.depositDate,tStr);return`
+    <div class="alert-row upcoming"><div><div class="ar-name">${c.store}</div><div class="ar-sub">Check #${c.checknum} · Due ${fmtD(c.depositDate)}</div></div>
+    <div style="display:flex;gap:7px;align-items:center;"><span class="ar-days upcoming">in ${d}d</span><span style="font-family:'IBM Plex Mono',monospace;color:var(--yellow);font-weight:600;">$${fmt(c.amount)}</span></div></div>`;}).join('');
+
+  const tTab=document.getElementById('tab-today');
+  let badge=tTab.querySelector('.tc');
+  if(dt.length>0){if(!badge){badge=document.createElement('span');badge.className='tc';tTab.appendChild(badge);}badge.textContent=dt.length;}
+  else if(badge)badge.remove();
+}
+
+function toggleB(id){const el=document.getElementById(id);el.classList.toggle('collapsed');const body=el.querySelector('.banner-body');if(body)body.style.display=el.classList.contains('collapsed')?'none':'block';}
+
+// ── ALL CHECKS ────────────────────────────────────────────────────────────────
+function setF(f,el){curFilter=f;document.querySelectorAll('.pills .pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');renderChecks();}
+function fMatch(c){if(curFilter==='all')return true;if(curFilter==='today')return dStatus(c)==='today';if(curFilter==='overdue')return dStatus(c)==='overdue';if(curFilter==='upcoming')return dStatus(c)==='upcoming';return c.status===curFilter;}
+function renderChecks(){
+  const q=(document.getElementById('si')?.value||'').toLowerCase();
+  const srt=document.getElementById('sortSel')?.value||'dep-asc';
+  let list=checks.filter(c=>{const m=!q||c.store.toLowerCase().includes(q)||c.checknum.includes(q)||(c.address||'').toLowerCase().includes(q)||(c.bank||'').toLowerCase().includes(q);return m&&fMatch(c);});
+  list.sort((a,b)=>{
+    if(srt==='dep-asc') return(a.depositDate||'9999')<(b.depositDate||'9999')?-1:1;
+    if(srt==='dep-desc')return(a.depositDate||'9999')>(b.depositDate||'9999')?-1:1;
+    if(srt==='date-desc')return new Date(b.createdAt)-new Date(a.createdAt);
+    if(srt==='amt-desc')return b.amount-a.amount;
+    if(srt==='amt-asc')return a.amount-b.amount;
+    if(srt==='name')return a.store.localeCompare(b.store);
+    return 0;
+  });
+  const el=document.getElementById('checksContainer');
+  if(!list.length){el.innerHTML=`<div class="empty-state"><div class="e">📭</div><p>No checks found</p></div>`;return;}
+  el.innerHTML=`<div class="cards-grid">${list.map(checkCard).join('')}</div>`;
+}
+
+const statusBadge={
+  active:`<span class="badge b-active"><span class="dot"></span>Active</span>`,
+  bounced:`<span class="badge b-bounced"><span class="dot"></span>Bounced</span>`,
+  pending:`<span class="badge b-pending"><span class="dot"></span>Pending</span>`,
+  cleared:`<span class="badge b-cleared"><span class="dot"></span>Cleared</span>`,
+};
+
+function depRow(c){
+  if(!c.depositDate)return'';const ds=dStatus(c);
+  if(ds==='none')   return`<div class="dep-row dep-cleared">✅ Cleared — ${fmtD(c.depositDate)}</div>`;
+  if(ds==='today')  return`<div class="dep-row dep-today">🏦 Hits Bank TODAY</div>`;
+  if(ds==='overdue'){const d=Math.abs(ddiff(c.depositDate,todayStr()));return`<div class="dep-row dep-overdue">⚠️ OVERDUE ${d}d — ${fmtD(c.depositDate)}</div>`;}
+  if(ds==='upcoming'){const d=ddiff(c.depositDate,todayStr());return`<div class="dep-row dep-upcoming">🔔 Due in ${d}d — ${fmtD(c.depositDate)}</div>`;}
+  return`<div class="dep-row dep-future">📅 ${fmtD(c.depositDate)}</div>`;
+}
+
+function checkCard(c){
+  const ds=dStatus(c);const cl=ds==='today'?'ct':ds==='overdue'?'ov':ds==='upcoming'?'up':'';
+  const bb=c.bounces?.length?`<span class="badge b-bounced" style="font-size:9px;">🔴 ${c.bounces.length}x</span>`:'';
+  return`<div class="chk-card ${cl}">
+    <div class="chk-header"><div><div class="chk-store">${c.store}</div><div class="chk-num">Check # ${c.checknum}</div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">${statusBadge[c.status]||''}${bb}</div></div>
+    <div class="chk-amount">$${fmt(c.amount)}</div>
+    ${depRow(c)}
+    ${c.address?`<div class="chk-det">📍 <strong>${c.address}</strong></div>`:''}
+    ${c.bank?`<div class="chk-det">🏦 <strong>${c.bank}</strong></div>`:''}
+    ${c.phone?`<div class="chk-det">📞 <strong>${c.phone}</strong></div>`:''}
+    <div class="chk-det">📋 Written: <strong>${fmtD(c.date)}</strong></div>
+    ${c.routing?`<div class="chk-det mono" style="font-size:11px;">RTN: ${mask(c.routing)}</div>`:''}
+    <div class="chk-actions">
+      <button class="btn btn-sm btn-blue" onclick="viewCheck('${c.id}')">👁 View</button>
+      <button class="btn btn-sm btn-orange" onclick="selectCustomer('${c.store.replace(/'/g,"\\'")}');showTab('customer',document.getElementById('tab-cust'))">👤</button>
+      ${c.status!=='bounced'?`<button class="btn btn-sm btn-warning" onclick="openBounce('${c.id}')">🔴</button>`:''}
+      <button class="btn btn-sm btn-success" onclick="markCleared('${c.id}')">✅</button>
+      <button class="btn btn-sm btn-danger"  onclick="deleteCheck('${c.id}')">🗑</button>
+    </div>
+  </div>`;
+}
+
+// ── TODAY ─────────────────────────────────────────────────────────────────────
+function renderToday(){
+  const tStr=todayStr();
+  document.getElementById('todayLabel').textContent=fmtLong(tStr);
+  const dt=checks.filter(c=>c.status!=='cleared'&&dStatus(c)==='today');
+  const ov=checks.filter(c=>c.status!=='cleared'&&dStatus(c)==='overdue');
+  const up=checks.filter(c=>c.status!=='cleared'&&dStatus(c)==='upcoming');
+  let html='';
+  if(!dt.length&&!ov.length&&!up.length){html=`<div class="empty-state"><div class="e">🎉</div><p>No checks due today or this week!</p></div>`;}
+  if(dt.length){
+    const tot=dt.reduce((s,c)=>s+c.amount,0);
+    html+=`<div class="sec-title">🏦 Hitting the Bank TODAY (${dt.length})</div>`;
+    html+=dt.map(c=>`<div class="today-row" style="margin-bottom:7px;">
+      <div><div style="font-weight:700;font-size:13px;">${c.store}</div>
+      <div style="font-size:11px;color:var(--dim);">Check #${c.checknum}${c.bank?' · '+c.bank:''}${c.address?' · '+c.address:''}</div>
+      ${c.phone?`<div style="font-size:11px;color:var(--dim);">📞 ${c.phone}</div>`:''}
+      ${c.routing?`<div style="font-size:11px;color:var(--dim);font-family:'IBM Plex Mono',monospace;">RTN: ${c.routing} · ACCT: ${mask(c.account)}</div>`:''}</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--green);">$${fmt(c.amount)}</span>
+        <button class="btn btn-sm btn-success" onclick="markCleared('${c.id}').then(()=>renderToday())">✅ Cleared</button>
+        <button class="btn btn-sm btn-danger" onclick="openBounce('${c.id}')">🔴</button>
+      </div></div>`).join('');
+    html+=`<div style="text-align:right;padding:9px 14px;font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--green);font-weight:700;border-top:1px dashed rgba(34,197,94,0.22);margin-bottom:8px;">Today's Total: $${fmt(tot)}</div>`;
+  }
+  if(ov.length){
+    html+=`<div class="sec-title">⚠️ Overdue (${ov.length})</div>`;
+    html+=ov.sort((a,b)=>a.depositDate<b.depositDate?-1:1).map(c=>{const d=Math.abs(ddiff(c.depositDate,tStr));return`
+      <div class="alert-row overdue" style="margin-bottom:6px;"><div><div class="ar-name">${c.store}</div><div class="ar-sub">Check #${c.checknum} · Due ${fmtD(c.depositDate)}${c.phone?' · 📞 '+c.phone:''}</div></div>
+      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;"><span class="ar-days overdue">${d}d late</span><span style="font-family:'IBM Plex Mono',monospace;color:var(--red);font-weight:600;">$${fmt(c.amount)}</span>
+      <button class="btn btn-sm btn-success" onclick="markCleared('${c.id}').then(()=>renderToday())">✅</button></div></div>`;}).join('');
+  }
+  if(up.length){
+    html+=`<div class="sec-title">🔔 Next 7 Days (${up.length})</div>`;
+    html+=up.sort((a,b)=>a.depositDate<b.depositDate?-1:1).map(c=>{const d=ddiff(c.depositDate,tStr);return`
+      <div class="alert-row upcoming" style="margin-bottom:6px;"><div><div class="ar-name">${c.store} <span style="font-size:11px;color:var(--dim);">· ${fmtD(c.depositDate)}</span></div>
+      <div class="ar-sub">Check #${c.checknum}${c.bank?' · '+c.bank:''}${c.phone?' · 📞 '+c.phone:''}</div></div>
+      <div style="display:flex;gap:7px;align-items:center;"><span class="ar-days upcoming">in ${d}d</span><span style="font-family:'IBM Plex Mono',monospace;color:var(--yellow);font-weight:600;">$${fmt(c.amount)}</span></div></div>`;}).join('');
+  }
+  document.getElementById('todayContainer').innerHTML=html;
+}
+
+// ── BOUNCED ───────────────────────────────────────────────────────────────────
+function renderBounced(){
+  const list=checks.filter(c=>c.bounces?.length>0);
+  const el=document.getElementById('bouncedContainer');
+  if(!list.length){el.innerHTML=`<div class="empty-state"><div class="e">✅</div><p>No bounced checks!</p></div>`;return;}
+  el.innerHTML=list.map(c=>`<div class="chk-card" style="margin-bottom:11px;">
+    <div class="chk-header"><div><div class="chk-store">${c.store}</div><div class="chk-num">Check #${c.checknum}${c.bank?' · '+c.bank:''}</div>
+    ${c.phone?`<div style="font-size:11px;color:var(--dim);">📞 ${c.phone}</div>`:''}</div>
+    <div><div class="chk-amount" style="font-size:18px;margin:0;">$${fmt(c.amount)}</div><span class="badge b-bounced" style="margin-top:5px;">🔴 ${c.bounces.length}x</span></div></div>
+    <div class="bounced-log"><div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:6px;letter-spacing:0.8px;text-transform:uppercase;">Return History</div>
+    ${c.bounces.map(b=>`<div class="b-entry"><div style="display:flex;justify-content:space-between;"><div class="b-reason">${b.reason}</div><div class="b-date">${b.date}</div></div>${b.note?`<div class="b-note">📝 ${b.note}</div>`:''}</div>`).join('')}</div>
+    <div class="chk-actions" style="margin-top:10px;">
+      <button class="btn btn-sm btn-warning" onclick="openBounce('${c.id}')">➕ Add Return</button>
+      <button class="btn btn-sm btn-success" onclick="markCleared('${c.id}')">✅ Settled</button>
+      <button class="btn btn-sm btn-blue" onclick="viewCheck('${c.id}')">👁 View</button>
+    </div></div>`).join('');
+}
+
+// ── VIEW ──────────────────────────────────────────────────────────────────────
+function viewCheck(id){
+  const c=checks.find(x=>x.id===id);if(!c)return;
+  document.getElementById('moViewContent').innerHTML=`
+    <div class="chk-prev">
+      <div style="display:flex;justify-content:space-between;margin-bottom:9px;">
+        <div><div class="cp-label">Pay to the Order of</div><div style="font-weight:700;font-size:14px;">${c.store}</div>${c.address?`<div style="font-size:10px;color:#888;">${c.address}</div>`:''}</div>
+        <div style="text-align:right;"><div class="cp-label">Date</div><div class="cp-val">${fmtD(c.date)}</div></div>
+      </div>
+      <div class="cp-amount">$ ${fmt(c.amount)}</div>
+      <hr class="cp-divider">
+      <div class="cp-g3">
+        <div><div class="cp-label">Routing #</div><div class="cp-val">${c.routing||'—'}</div></div>
+        <div><div class="cp-label">Account #</div><div class="cp-val">${c.account||'—'}</div></div>
+        <div><div class="cp-label">Check #</div><div class="cp-val">${c.checknum}</div></div>
+      </div>
+      ${c.bank?`<div style="margin-top:8px;"><div class="cp-label">Bank</div><div class="cp-val">${c.bank}</div></div>`:''}
+    </div>
+    ${c.depositDate?`<div style="margin-top:10px;padding:10px;background:rgba(28,35,51,0.8);border-radius:9px;border:1px solid var(--border);">
+      <div style="font-size:10px;color:var(--dim);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:5px;">Deposit / Due Date</div>${depRow(c)}</div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-top:9px;padding:10px;background:rgba(28,35,51,0.5);border-radius:9px;border:1px solid var(--border);">
+      <div><span style="color:var(--dim);">📞</span> ${c.phone||'—'}</div>
+      <div style="display:flex;align-items:center;gap:5px;">${statusBadge[c.status]||''}</div>
+      <div><span style="color:var(--dim);">🔴 Returns:</span> ${c.bounces?.length||0}</div>
+      <div><span style="color:var(--dim);">📝</span> ${c.notes||'—'}</div>
+    </div>`;
+  document.getElementById('moView').classList.add('open');
+}
+
+// ── BOUNCE MODAL ──────────────────────────────────────────────────────────────
+function openBounce(id){
+  document.getElementById('mBounceId').value=id;
+  document.getElementById('mBounceDate').value=todayStr();
+  document.getElementById('mBounceNote').value='';
+  document.getElementById('moBounce').classList.add('open');
+}
+function closeMo(id){document.getElementById(id).classList.remove('open');}
+
+async function confirmBounce(){
+  const id=document.getElementById('mBounceId').value;
+  const c=checks.find(x=>x.id===id);if(!c)return;
+  c.status='bounced';c.bounces=c.bounces||[];
+  c.bounces.push({reason:document.getElementById('mBounceReason').value,date:document.getElementById('mBounceDate').value,note:document.getElementById('mBounceNote').value,recordedAt:new Date().toISOString()});
+  closeMo('moBounce');refreshAll();renderChecks();
+  showToast('💾 Saving bounce...');
+  await updateInCloud(c);
+  showToast('🔴 Bounced check recorded in cloud');
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+function renderStats(){
+  const total=checks.length,totalAmt=checks.reduce((s,c)=>s+c.amount,0);
+  const bounced=checks.filter(c=>c.status==='bounced').length;
+  const cleared=checks.filter(c=>c.status==='cleared').length;
+  const pending=checks.filter(c=>c.status==='pending').length;
+  const dueT=checks.filter(c=>c.status!=='cleared'&&dStatus(c)==='today').length;
+  const ov=checks.filter(c=>c.status!=='cleared'&&dStatus(c)==='overdue').length;
+  const rate=total?((bounced/total)*100).toFixed(1):'0.0';
+  const custCount=Object.keys(getCustomers()).length;
+
+  document.getElementById('statsGrid').innerHTML=`
+    <div class="sc"><div class="i">👥</div><div class="v vo">${custCount}</div><div class="t">Customers</div></div>
+    <div class="sc"><div class="i">📋</div><div class="v vb">${total}</div><div class="t">Total Checks</div></div>
+    <div class="sc"><div class="i">💰</div><div class="v vg">$${totalAmt.toLocaleString('en-US',{maximumFractionDigits:0})}</div><div class="t">Total Amount</div></div>
+    <div class="sc"><div class="i">🏦</div><div class="v vg">${dueT}</div><div class="t">Due Today</div></div>
+    <div class="sc"><div class="i">⚠️</div><div class="v vr">${ov}</div><div class="t">Overdue</div></div>
+    <div class="sc"><div class="i">🔴</div><div class="v vr">${bounced}</div><div class="t">Bounced</div></div>
+    <div class="sc"><div class="i">✅</div><div class="v vg">${cleared}</div><div class="t">Cleared</div></div>
+    <div class="sc"><div class="i">📈</div><div class="v vo">${rate}%</div><div class="t">Bounce Rate</div></div>
+  `;
+
+  const tStr=todayStr();
+  const next30=checks.filter(c=>c.depositDate&&c.status!=='cleared'&&ddiff(c.depositDate,tStr)>=0&&ddiff(c.depositDate,tStr)<=30).sort((a,b)=>a.depositDate<b.depositDate?-1:1);
+  document.getElementById('upcomingSched').innerHTML=next30.length
+    ?`<div class="tw"><table><thead><tr><th>Deposit Date</th><th>Customer</th><th>Check #</th><th>Bank</th><th>Amount</th><th>Days</th><th>Status</th></tr></thead>
+      <tbody>${next30.map(c=>{const d=ddiff(c.depositDate,tStr),ds=dStatus(c);return`<tr>
+        <td class="mono">${fmtD(c.depositDate)}</td><td style="font-weight:600;">${c.store}</td><td class="mono">${c.checknum}</td>
+        <td style="color:var(--dim);">${c.bank||'—'}</td><td class="mono" style="color:var(--green);">$${fmt(c.amount)}</td>
+        <td>${ds==='today'?'<span style="color:var(--green);font-weight:700;">TODAY</span>':d+'d'}</td><td>${statusBadge[c.status]||''}</td>
+      </tr>`;}).join('')}</tbody></table></div>`
+    :`<div class="empty-state" style="padding:26px;"><p>No upcoming deposits in next 30 days</p></div>`;
+
+  const custs=Object.values(getCustomers()).sort((a,b)=>b.checks.length-a.checks.length);
+  document.getElementById('customersSummary').innerHTML=custs.length
+    ?`<div class="tw"><table><thead><tr><th>Customer</th><th>Checks</th><th>Total</th><th>Cleared</th><th>Bounced</th><th>Last Check</th><th>Action</th></tr></thead>
+      <tbody>${custs.map(c=>{
+        const tot=c.checks.reduce((s,x)=>s+x.amount,0);
+        const bc=c.checks.filter(x=>x.bounces?.length>0).length;
+        const cl=c.checks.filter(x=>x.status==='cleared').length;
+        const last=c.checks.sort((a,b)=>b.date<a.date?-1:1)[0];
+        return`<tr><td style="font-weight:700;">${c.name}</td>
+          <td><span style="background:rgba(255,137,0,0.12);color:var(--orange2);font-weight:700;padding:2px 9px;border-radius:12px;font-size:11px;">${c.checks.length}</span></td>
+          <td class="mono" style="color:var(--green);">$${fmt(tot)}</td>
+          <td><span class="badge b-cleared">${cl}</span></td>
+          <td>${bc>0?`<span class="badge b-bounced">🔴 ${bc}</span>`:'<span style="color:var(--dim);">0</span>'}</td>
+          <td class="mono" style="color:var(--dim);">${fmtD(last?.date)}</td>
+          <td><button class="btn btn-sm btn-orange" onclick="selectCustomer('${c.name.replace(/'/g,"\\'")}');showTab('customer',document.getElementById('tab-cust'))">👤 View</button></td>
+        </tr>`;}).join('')}</tbody></table></div>`
+    :`<div class="empty-state" style="padding:26px;"><p>No customers yet</p></div>`;
+}
+
+// ── HEADER ────────────────────────────────────────────────────────────────────
+function updateHeader(){
+  document.getElementById('h-total').textContent=checks.length;
+  document.getElementById('h-customers').textContent=Object.keys(getCustomers()).length;
+  const tot=checks.reduce((s,c)=>s+c.amount,0);
+  document.getElementById('h-amount').textContent='$'+tot.toLocaleString('en-US',{maximumFractionDigits:0});
+  document.getElementById('h-today').textContent=checks.filter(c=>c.status!=='cleared'&&dStatus(c)==='today').length;
+  document.getElementById('h-bounced').textContent=checks.filter(c=>c.status==='bounced').length;
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+// ── CLOSE SUGGESTIONS ─────────────────────────────────────────────────────────
+document.addEventListener('click',e=>{if(!e.target.closest('.cust-search-wrap'))document.getElementById('custSug').classList.remove('open');});
+
+// ── AUTO REFRESH every 60 seconds ─────────────────────────────────────────────
+setInterval(loadFromCloud, 60000);
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.getElementById('f-date').value=todayStr();
+document.getElementById('date-today').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+loadFromCloud();
+</script>
+</body>
+</html>
