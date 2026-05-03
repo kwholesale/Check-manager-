@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K WHOLESALE LLC — Check Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+:root{--bg:#151e2d;--bg2:#1c2740;--bg3:#243050;--panel:rgba(28,39,64,0.97);--border:rgba(255,255,255,0.07);--orange:#ff8900;--orange2:#ffaa33;--orange3:#ffd280;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;--cyan:#38bdf8;--text:#e8edf5;--text2:#a0aec0;--dim:#5a6a85;--shadow:0 8px 40px rgba(0,0,0,0.5);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 50% at 10% 5%,rgba(255,137,0,0.07) 0%,transparent 55%),radial-gradient(ellipse 60% 60% at 90% 95%,rgba(56,189,248,0.04) 0%,transparent 55%);}
+.app{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:16px;}
+.sync-bar{display:flex;align-items:center;justify-content:space-between;padding:9px 18px;border-radius:12px;margin-bottom:12px;background:rgba(28,39,64,0.9);border:1px solid var(--border);font-size:12px;}
+.sync-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;display:inline-block;}
+.sync-dot.online{background:var(--green);box-shadow:0 0 0 0 rgba(34,197,94,0.7);animation:pulse 2s infinite;}
+.sync-dot.offline{background:var(--red);}
+.sync-dot.syncing{background:var(--yellow);animation:blink 0.7s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,0.7)}70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.sync-left{display:flex;align-items:center;gap:9px;}
+.sync-text{color:var(--text2);font-weight:600;}
+.sync-btn{padding:5px 14px;border:1px solid rgba(255,137,0,0.3);background:rgba(255,137,0,0.08);color:var(--orange2);border-radius:8px;cursor:pointer;font-size:11px;font-family:'Inter',sans-serif;font-weight:700;}
+header{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;background:linear-gradient(135deg,#1a2a47,#22355f,#1a2a47);border:2px solid rgba(255,137,0,0.4);border-radius:18px;margin-bottom:12px;box-shadow:0 12px 50px rgba(0,0,0,0.5);position:relative;overflow:hidden;flex-wrap:wrap;gap:14px;}
+header::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--orange) 20%,var(--orange2) 50%,var(--orange) 80%,transparent);}
+.brand{display:flex;align-items:center;gap:16px;}
+.logo{width:64px;height:64px;background:linear-gradient(145deg,var(--orange),#cc6e00);border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:38px;color:#fff;box-shadow:0 6px 24px rgba(255,137,0,0.5);flex-shrink:0;}
+.brand-name{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:2px;background:linear-gradient(90deg,var(--orange),var(--orange2),var(--orange3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;}
+.brand-tag{font-size:11px;font-weight:700;color:rgba(255,170,51,0.65);letter-spacing:2px;text-transform:uppercase;margin-top:3px;}
+.brand-div{width:2px;height:50px;background:linear-gradient(to bottom,transparent,rgba(255,137,0,0.45),transparent);margin:0 10px;}
+.sys-label .s1{font-size:15px;font-weight:700;color:var(--text);}
+.sys-label .s2{font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:3px;}
+.hdr-stats{display:flex;gap:10px;flex-wrap:wrap;}
+.stat-pill{text-align:center;padding:9px 18px;border-radius:12px;border:1px solid rgba(255,137,0,0.22);background:rgba(10,17,32,0.6);}
+.stat-pill .num{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:var(--orange2);display:block;}
+.stat-pill .lbl{font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+.date-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:rgba(28,39,64,0.8);border:1px solid rgba(255,137,0,0.18);border-radius:12px;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.date-today{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--orange2);}
+.alert-banner{border-radius:12px;margin-bottom:10px;overflow:hidden;display:none;}
+.alert-banner.has{display:block;}
+.ab-today{background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.25);}
+.ab-overdue{background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.22);}
+.ab-upcoming{background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.22);}
+.ab-head{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;cursor:pointer;user-select:none;}
+.ab-today .ab-head{background:rgba(34,197,94,0.06);border-bottom:1px solid rgba(34,197,94,0.14);}
+.ab-overdue .ab-head{background:rgba(239,68,68,0.06);border-bottom:1px solid rgba(239,68,68,0.12);}
+.ab-upcoming .ab-head{background:rgba(245,158,11,0.06);border-bottom:1px solid rgba(245,158,11,0.12);}
+.ab-title{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;}
+.ab-today .ab-title{color:var(--green);}
+.ab-overdue .ab-title{color:var(--red);}
+.ab-upcoming .ab-title{color:var(--yellow);}
+.ab-body{padding:10px 14px;}
+.pdot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;display:inline-block;}
+.chev{transition:transform 0.28s;color:var(--dim);}
+.collapsed .chev{transform:rotate(-90deg);}
+.today-row{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;margin:5px 0;background:rgba(34,197,94,0.05);border:1px solid rgba(34,197,94,0.12);flex-wrap:wrap;gap:6px;}
+.alert-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;margin:4px 0;flex-wrap:wrap;gap:6px;}
+.alert-row.ov{background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.12);}
+.alert-row.up{background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.12);}
+.ar-name{font-weight:700;font-size:13px;}
+.ar-sub{font-size:11px;color:var(--dim);margin-top:1px;}
+.days-badge{font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;white-space:nowrap;}
+.days-badge.ov{background:rgba(239,68,68,0.12);color:var(--red);}
+.days-badge.up{background:rgba(245,158,11,0.12);color:var(--yellow);}
+.tabs{display:flex;gap:5px;margin-bottom:14px;background:rgba(28,39,64,0.9);border:2px solid rgba(255,137,0,0.22);border-radius:16px;padding:6px;overflow-x:auto;}
+.tab{flex:1;min-width:80px;padding:14px 10px;border:none;background:transparent;color:var(--dim);font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border-radius:11px;transition:all 0.22s;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;position:relative;}
+.tab:hover{color:var(--text2);background:rgba(255,137,0,0.07);}
+.tab.active{background:linear-gradient(135deg,var(--orange),#cc6e00);color:#fff;font-weight:700;box-shadow:0 4px 16px rgba(255,137,0,0.4);}
+.tab .tc{position:absolute;top:4px;right:5px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.panel{display:none;}.panel.active{display:block;}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:12px;box-shadow:var(--shadow);}
+.card-title{font-size:13px;font-weight:700;color:var(--orange2);margin-bottom:14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,137,0,0.12);padding-bottom:12px;letter-spacing:0.4px;text-transform:uppercase;}
+.fg{display:flex;flex-direction:column;gap:5px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:11px;}
+.full{grid-column:1/-1;}
+label{font-size:12px;font-weight:700;color:var(--dim);letter-spacing:0.5px;text-transform:uppercase;}
+label.gl{color:var(--green)!important;}
+input,select,textarea{background:rgba(15,25,45,0.8);border:1px solid rgba(255,255,255,0.07);border-radius:9px;padding:11px 13px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;transition:all 0.2s;outline:none;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--orange);background:rgba(15,25,45,0.95);box-shadow:0 0 0 3px rgba(255,137,0,0.1);}
+input::placeholder{color:rgba(90,106,133,0.5);font-size:13px;}
+select option{background:var(--bg2);}
+.mono{font-family:'IBM Plex Mono',monospace;letter-spacing:1px;}
+.btn{padding:10px 18px;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:linear-gradient(135deg,var(--orange),#cc6e00);color:#fff;box-shadow:0 4px 14px rgba(255,137,0,0.3);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(255,137,0,0.45);}
+.btn-danger{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.22);}
+.btn-danger:hover{background:rgba(239,68,68,0.2);}
+.btn-warning{background:rgba(245,158,11,0.1);color:var(--yellow);border:1px solid rgba(245,158,11,0.22);}
+.btn-warning:hover{background:rgba(245,158,11,0.2);}
+.btn-success{background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.22);}
+.btn-success:hover{background:rgba(34,197,94,0.2);}
+.btn-cancel{background:rgba(90,106,133,0.1);color:var(--text2);border:1px solid rgba(90,106,133,0.18);}
+.btn-cancel:hover{background:rgba(90,106,133,0.2);}
+.btn-blue{background:rgba(56,189,248,0.1);color:var(--cyan);border:1px solid rgba(56,189,248,0.22);}
+.btn-blue:hover{background:rgba(56,189,248,0.2);}
+.btn-orange{background:rgba(255,137,0,0.1);color:var(--orange);border:1px solid rgba(255,137,0,0.25);}
+.btn-orange:hover{background:rgba(255,137,0,0.2);}
+.btn-sm{font-size:12px;padding:6px 11px;border-radius:7px;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;}
+.b-active{background:rgba(34,197,94,0.1);color:#22c55e;border:1px solid rgba(34,197,94,0.24);}
+.b-bounced{background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.24);}
+.b-pending{background:rgba(245,158,11,0.1);color:#f59e0b;border:1px solid rgba(245,158,11,0.24);}
+.b-cleared{background:rgba(56,189,248,0.1);color:#38bdf8;border:1px solid rgba(56,189,248,0.24);}
+.dot{width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block;}
+.stype-bar{display:flex;border:2px solid rgba(255,137,0,0.3);border-radius:12px;overflow:hidden;margin-bottom:13px;}
+.stype-btn{flex:1;padding:13px 10px;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;background:transparent;color:var(--dim);transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:6px;border-right:1px solid rgba(255,137,0,0.18);}
+.stype-btn:last-child{border-right:none;}
+.stype-btn:hover{background:rgba(255,137,0,0.07);color:var(--text2);}
+.stype-btn.active{background:linear-gradient(135deg,var(--orange),#d47200);color:#fff;font-weight:700;}
+.srch-wrap{position:relative;margin-bottom:14px;}
+.srch-input{width:100%;padding:15px 48px 15px 52px;background:rgba(10,17,32,0.8);border:2px solid rgba(255,137,0,0.38);border-radius:12px;color:var(--text);font-family:'Inter',sans-serif;font-size:15px;font-weight:500;outline:none;transition:all 0.22s;}
+.srch-input:focus{border-color:var(--orange);box-shadow:0 0 0 4px rgba(255,137,0,0.12);}
+.srch-icon{position:absolute;left:17px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;}
+.srch-clear{position:absolute;right:13px;top:50%;transform:translateY(-50%);background:rgba(90,106,133,0.2);border:none;color:var(--dim);width:27px;height:27px;border-radius:50%;cursor:pointer;font-size:13px;display:none;align-items:center;justify-content:center;transition:all 0.2s;}
+.srch-clear:hover{background:rgba(239,68,68,0.2);color:var(--red);}
+.srch-clear.show{display:flex;}
+.sugs{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:100;background:var(--bg3);border:1px solid rgba(255,137,0,0.3);border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.55);display:none;}
+.sugs.open{display:block;}
+.sug-item{display:flex;align-items:center;justify-content:space-between;padding:12px 17px;cursor:pointer;transition:background 0.14s;border-bottom:1px solid rgba(255,255,255,0.04);}
+.sug-item:last-child{border-bottom:none;}
+.sug-item:hover{background:rgba(255,137,0,0.08);}
+.sug-avatar{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--orange),#cc6e00);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:16px;color:#fff;flex-shrink:0;}
+.sug-name{font-weight:700;font-size:13px;}
+.sug-phone{font-size:11px;color:var(--dim);margin-top:1px;}
+.sug-cnt{font-size:11px;font-weight:700;background:rgba(255,137,0,0.12);color:var(--orange2);padding:2px 9px;border-radius:12px;border:1px solid rgba(255,137,0,0.2);}
+.sug-amt{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--green);font-weight:600;}
+.amt-range{display:flex;gap:10px;align-items:center;margin-bottom:13px;flex-wrap:wrap;}
+.amt-range input{flex:1;min-width:120px;}
+.amt-range span{color:var(--dim);font-weight:700;flex-shrink:0;}
+.cri{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-radius:11px;margin:7px 0;background:rgba(28,39,64,0.7);border:1px solid var(--border);transition:all 0.18s;flex-wrap:wrap;gap:10px;}
+.cri:hover{background:rgba(255,137,0,0.05);border-color:rgba(255,137,0,0.18);}
+.cri.ct{border-color:rgba(34,197,94,0.38);}
+.cri.ov{border-color:rgba(239,68,68,0.32);}
+.cri.up{border-color:rgba(245,158,11,0.3);}
+.cri-icon{width:42px;height:42px;border-radius:9px;background:rgba(255,137,0,0.1);border:1px solid rgba(255,137,0,0.22);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.cri-store{font-weight:700;font-size:14px;}
+.cri-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);margin-top:2px;}
+.cri-amount{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--green);}
+.dep-tag{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap;}
+.dep-tag.today{background:rgba(34,197,94,0.13);color:var(--green);border:1px solid rgba(34,197,94,0.24);}
+.dep-tag.overdue{background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.24);}
+.dep-tag.upcoming{background:rgba(245,158,11,0.12);color:var(--yellow);border:1px solid rgba(245,158,11,0.24);}
+.dep-tag.future{background:rgba(56,189,248,0.09);color:var(--cyan);border:1px solid rgba(56,189,248,0.18);}
+.dep-tag.none{background:rgba(90,106,133,0.1);color:var(--dim);border:1px solid rgba(90,106,133,0.16);}
+.cust-profile{background:var(--panel);border:1px solid rgba(255,137,0,0.28);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);}
+.cust-profile-header{padding:20px 24px;background:rgba(255,137,0,0.07);border-bottom:1px solid rgba(255,137,0,0.14);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;}
+.cust-avatar{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,var(--orange),#cc6e00);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;box-shadow:0 4px 14px rgba(255,137,0,0.38);font-family:'Bebas Neue',sans-serif;flex-shrink:0;}
+.cust-name{font-size:20px;font-weight:800;}
+.cust-sub{font-size:11px;color:var(--dim);margin-top:3px;}
+.cust-stats-row{display:flex;gap:10px;flex-wrap:wrap;}
+.cust-stat{text-align:center;padding:9px 15px;background:rgba(15,25,45,0.7);border:1px solid var(--border);border-radius:9px;min-width:72px;}
+.cust-stat .v{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;display:block;}
+.cust-stat .l{font-size:9px;color:var(--dim);letter-spacing:0.7px;text-transform:uppercase;margin-top:2px;}
+.cust-checks-wrap{padding:18px 24px;}
+.cust-total-row{display:flex;justify-content:space-between;align-items:center;padding:11px 15px;margin-top:9px;background:rgba(255,137,0,0.06);border:1px solid rgba(255,137,0,0.18);border-radius:9px;}
+.search-bar{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap;}
+.si-wrap{flex:1;position:relative;min-width:170px;}
+.si-wrap input{padding-left:32px;}
+.si-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:13px;}
+.pills{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;}
+.pill{padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--dim);font-family:'Inter',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.16s;}
+.pill:hover{color:var(--text2);border-color:var(--orange);}
+.pill.active{background:var(--orange);color:#fff;border-color:var(--orange);}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:11px;}
+.chk-card{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:16px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:transform 0.18s,border-color 0.18s;}
+.chk-card:hover{transform:translateY(-2px);}
+.chk-card.ct{border-color:rgba(34,197,94,0.38);}
+.chk-card.ov{border-color:rgba(239,68,68,0.34);}
+.chk-card.up{border-color:rgba(245,158,11,0.3);}
+.chk-card::before{content:'K';font-family:'Bebas Neue',sans-serif;position:absolute;top:-10px;right:8px;font-size:76px;color:var(--orange);opacity:0.04;pointer-events:none;line-height:1;}
+.chk-store{font-weight:700;font-size:15px;}
+.chk-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);margin-top:2px;}
+.chk-amount{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--green);margin:7px 0;}
+.chk-det{font-size:13px;color:var(--dim);margin:3px 0;display:flex;align-items:center;gap:5px;}
+.chk-det strong{color:var(--text2);font-weight:500;}
+.dep-row{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:7px;margin:6px 0;font-size:12px;font-weight:600;}
+.dep-row.today{background:rgba(34,197,94,0.09);border:1px solid rgba(34,197,94,0.22);color:var(--green);}
+.dep-row.overdue{background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.18);color:var(--red);}
+.dep-row.upcoming{background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.18);color:var(--yellow);}
+.dep-row.future{background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.16);color:var(--cyan);}
+.dep-row.cleared{background:rgba(90,106,133,0.07);border:1px solid rgba(90,106,133,0.15);color:var(--dim);}
+.chk-actions{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap;}
+.bl{margin-top:10px;padding-top:9px;border-top:1px solid rgba(239,68,68,0.18);}
+.bl-entry{background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.13);border-radius:7px;padding:7px 10px;margin:4px 0;font-size:12px;}
+.bl-reason{color:var(--red);font-weight:600;margin-top:2px;}
+.bl-note{color:var(--text2);margin-top:2px;font-size:11px;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin-bottom:13px;}
+.sc{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:17px;text-align:center;transition:transform 0.18s;}
+.sc:hover{transform:translateY(-2px);}
+.sc .i{font-size:22px;margin-bottom:5px;}
+.sc .v{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;margin-bottom:3px;}
+.sc .t{font-size:10px;color:var(--dim);font-weight:600;letter-spacing:0.5px;text-transform:uppercase;}
+.vg{color:var(--green);}.vr{color:var(--red);}.vo{color:var(--orange2);}.vb{color:var(--cyan);}
+.sec-title{font-size:11px;font-weight:700;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin:15px 0 8px;display:flex;align-items:center;gap:7px;}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.tw{overflow-x:auto;border-radius:9px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead tr{background:rgba(15,25,45,0.9);border-bottom:2px solid rgba(255,137,0,0.16);}
+th{padding:10px 12px;text-align:left;font-weight:700;color:var(--orange2);font-size:10px;letter-spacing:0.7px;text-transform:uppercase;white-space:nowrap;}
+tbody tr{border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.14s;}
+tbody tr:hover{background:rgba(255,137,0,0.04);}
+td{padding:10px 12px;vertical-align:middle;}
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:1000;backdrop-filter:blur(10px);align-items:center;justify-content:center;}
+.mo.open{display:flex;}
+.md{background:linear-gradient(145deg,var(--bg3),var(--bg2));border:1px solid rgba(255,137,0,0.2);border-radius:16px;padding:22px;width:90%;max-width:460px;box-shadow:0 30px 80px rgba(0,0,0,0.7);animation:mIn 0.24s ease;}
+.md.wide{max-width:600px;max-height:90vh;overflow-y:auto;}
+@keyframes mIn{from{opacity:0;transform:scale(0.92) translateY(-12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.md-title{font-size:15px;font-weight:700;color:var(--orange2);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.md-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+.chk-prev{background:#f5f0e8;border-radius:8px;padding:16px;color:#1a1a1a;font-family:'IBM Plex Mono',monospace;border:2px solid #ff8900;margin-top:10px;position:relative;}
+.chk-prev::before{content:'K WHOLESALE LLC';position:absolute;bottom:7px;right:9px;font-size:8px;color:rgba(255,137,0,0.2);letter-spacing:1px;font-weight:700;}
+.cp-lbl{color:#888;font-size:9px;letter-spacing:0.7px;text-transform:uppercase;margin-bottom:2px;}
+.cp-val{font-weight:600;font-size:12px;}
+.cp-amount{font-size:20px;font-weight:700;color:#1a5c1a;margin:5px 0;}
+.cp-div{border:none;border-top:1px dashed #ff8900;margin:7px 0;}
+.cp-g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.empty{text-align:center;padding:44px 20px;color:var(--dim);}
+.empty .e{font-size:40px;margin-bottom:9px;}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(120px);background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--orange);color:var(--text);padding:10px 20px;border-radius:40px;font-size:13px;font-weight:600;z-index:9999;transition:transform 0.36s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 10px 40px rgba(0,0,0,0.5);white-space:nowrap;max-width:90vw;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--orange);}
+@media(max-width:900px){
+  header{flex-direction:column;gap:12px;}
+  .hdr-stats{justify-content:center;}
+  .brand-div{display:none;}
+  .tabs{overflow-x:auto;}
+  .tab{font-size:12px;padding:12px 8px;flex-shrink:0;min-width:70px;}
+  .grid{grid-template-columns:1fr;}
+  .cp-g3{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="sync-bar">
+  <div class="sync-left">
+    <div class="sync-dot offline" id="syncDot"></div>
+    <span class="sync-text" id="syncText">Connecting...</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="sync-time" id="syncTime" style="color:var(--dim);font-size:11px;"></span>
+    <button class="sync-btn" onclick="syncNow()">↻ Refresh</button>
+  </div>
+</div>
+<header>
+  <div class="brand">
+    <div class="logo">K</div>
+    <div>
+      <div class="brand-name">K WHOLESALE LLC</div>
+      <div class="brand-tag">Fast · Reliable · Wholesale</div>
+    </div>
+    <div class="brand-div"></div>
+    <div class="sys-label">
+      <div class="s1">Check Management System</div>
+      <div class="s2">Cloud Sync · All Devices</div>
+    </div>
+  </div>
+  <div class="hdr-stats">
+    <div class="stat-pill"><span class="num" id="h-total">0</span><span class="lbl">Checks</span></div>
+    <div class="stat-pill"><span class="num" id="h-custs" style="color:var(--orange2);">0</span><span class="lbl">Customers</span></div>
+    <div class="stat-pill"><span class="num" id="h-amount" style="color:var(--green);">$0</span><span class="lbl">Total</span></div>
+    <div class="stat-pill"><span class="num" id="h-today" style="color:var(--green);">0</span><span class="lbl">Due Today</span></div>
+    <div class="stat-pill"><span class="num" id="h-bounced" style="color:var(--red);">0</span><span class="lbl">Bounced</span></div>
+  </div>
+</header>
+<div class="date-bar">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:18px;">📅</span>
+    <span style="font-size:13px;font-weight:600;color:var(--text2);">Today:</span>
+    <span class="date-today" id="dateToday"></span>
+  </div>
+  <span style="font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;">K WHOLESALE LLC · Check Management</span>
+</div>
+<div class="alert-banner ab-today" id="bToday">
+  <div class="ab-head" onclick="toggleBanner('bToday')">
+    <div class="ab-title"><span class="pdot"></span>🏦 Due Today <span id="bTodayCount" style="background:rgba(34,197,94,0.12);padding:2px 9px;border-radius:12px;font-size:11px;"></span></div>
+    <div style="display:flex;align-items:center;gap:9px;"><span id="bTodayAmt" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--green);background:rgba(34,197,94,0.09);padding:3px 10px;border-radius:20px;border:1px solid rgba(34,197,94,0.18);"></span><span class="chev">▾</span></div>
+  </div>
+  <div class="ab-body" id="bTodayBody"></div>
+</div>
+<div class="alert-banner ab-overdue" id="bOverdue">
+  <div class="ab-head" onclick="toggleBanner('bOverdue')">
+    <div class="ab-title">⚠️ Overdue <span id="bOverdueCount" style="background:rgba(239,68,68,0.12);padding:2px 9px;border-radius:12px;font-size:11px;"></span></div>
+    <span class="chev">▾</span>
+  </div>
+  <div class="ab-body" id="bOverdueBody"></div>
+</div>
+<div class="alert-banner ab-upcoming" id="bUpcoming">
+  <div class="ab-head" onclick="toggleBanner('bUpcoming')">
+    <div class="ab-title">🔔 Next 7 Days <span id="bUpcomingCount" style="background:rgba(245,158,11,0.12);padding:2px 9px;border-radius:12px;font-size:11px;"></span></div>
+    <span class="chev">▾</span>
+  </div>
+  <div class="ab-body" id="bUpcomingBody"></div>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="showTab('add',this)">➕ New Check</button>
+  <button class="tab" onclick="showTab('search',this)" id="tab-search">🔍 Search</button>
+  <button class="tab" onclick="showTab('checks',this)">📋 All Checks</button>
+  <button class="tab" onclick="showTab('today',this)" id="tab-today">📅 Today</button>
+  <button class="tab" onclick="showTab('bounced',this)">🔴 Bounced</button>
+  <button class="tab" onclick="showTab('stats',this)">📊 Dashboard</button>
+</div>
+<div class="panel active" id="panel-add">
+  <div class="card">
+    <div class="card-title">📝 New Check Entry</div>
+    <div class="grid">
+      <div class="fg"><label>🏪 Store / Customer Name</label><input type="text" id="f-store" placeholder="e.g. ABC Grocery" list="store-list"/><datalist id="store-list"></datalist></div>
+      <div class="fg"><label>📍 Address</label><input type="text" id="f-address" placeholder="123 Main St, Miami FL"/></div>
+      <div class="fg"><label>💰 Amount ($)</label><input type="number" id="f-amount" placeholder="0.00" step="0.01" min="0.01" class="mono"/></div>
+      <div class="fg"><label>🔢 Check Number</label><input type="text" id="f-checknum" class="mono" placeholder="e.g. 1042"/></div>
+      <div class="fg"><label>🏛️ Routing Number</label><input type="text" id="f-routing" class="mono" placeholder="9-digit ABA" maxlength="9"/></div>
+      <div class="fg"><label>💳 Account Number</label><input type="text" id="f-account" class="mono" placeholder="Account number"/></div>
+      <div class="fg"><label>📋 Check Date</label><input type="date" id="f-date"/></div>
+      <div class="fg"><label class="gl">🏦 Deposit / Due Date ★</label><input type="date" id="f-deposit" style="border-color:rgba(34,197,94,0.25);"/></div>
+      <div class="fg"><label>🏦 Bank Name</label><input type="text" id="f-bank" placeholder="e.g. Bank of America"/></div>
+      <div class="fg"><label>📊 Status</label>
+        <select id="f-status">
+          <option value="pending">⏳ Pending</option>
+          <option value="active">✅ Active</option>
+          <option value="cleared">🔵 Cleared</option>
+          <option value="bounced">🔴 Bounced</option>
+        </select>
+      </div>
+      <div class="fg"><label>📞 Phone</label><input type="text" id="f-phone" placeholder="Customer phone"/></div>
+      <div class="fg full"><label>📝 Notes</label><textarea id="f-notes" rows="2" placeholder="Additional notes..."></textarea></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:15px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="addCheck()">💾 Save Check</button>
+      <button class="btn btn-cancel" onclick="clearForm()">🗑 Clear</button>
+    </div>
+  </div>
+</div>
+<div class="panel" id="panel-search">
+  <div class="card">
+    <div class="card-title">🔍 Smart Search</div>
+    <div class="stype-bar">
+      <button class="stype-btn active" id="st-name" onclick="setSearchType('name')">🏪 Store Name</button>
+      <button class="stype-btn" id="st-check" onclick="setSearchType('check')">🔢 Check #</button>
+      <button class="stype-btn" id="st-amount" onclick="setSearchType('amount')">💰 Amount</button>
+    </div>
+    <div id="search-name-wrap">
+      <div class="srch-wrap">
+        <span class="srch-icon">🏪</span>
+        <input type="text" class="srch-input" id="srchInput" placeholder="Type store or customer name..." oninput="onSearch()" autocomplete="off"/>
+        <button class="srch-clear" id="srchClear" onclick="clearSearch()">✕</button>
+        <div class="sugs" id="srchSugs"></div>
+      </div>
+    </div>
+    <div id="search-amount-wrap" style="display:none;">
+      <div class="amt-range">
+        <div class="fg" style="flex:1;"><label>Min ($)</label><input type="number" id="amt-min" placeholder="0.00" step="0.01" min="0" class="mono" oninput="onSearch()"/></div>
+        <span style="margin-top:22px;">—</span>
+        <div class="fg" style="flex:1;"><label>Max ($)</label><input type="number" id="amt-max" placeholder="Any" step="0.01" min="0" class="mono" oninput="onSearch()"/></div>
+        <button class="btn btn-primary" onclick="onSearch()" style="margin-top:18px;">🔍 Search</button>
+      </div>
+    </div>
+    <div id="searchResult"><div class="empty"><div class="e">🔍</div><p>Choose a search type and start typing</p></div></div>
+  </div>
+</div>
+<div class="panel" id="panel-checks">
+  <div class="card" style="padding:16px;">
+    <div class="search-bar">
+      <div class="si-wrap"><span class="si-ico">🔍</span><input type="text" id="siAll" placeholder="Search name, check #, bank..." oninput="renderChecks()"/></div>
+      <select id="sortSel" onchange="renderChecks()" style="width:auto;">
+        <option value="dep-asc">Deposit Date ↑</option>
+        <option value="dep-desc">Deposit Date ↓</option>
+        <option value="date-desc">Newest First</option>
+        <option value="amt-desc">Amount: High→Low</option>
+        <option value="amt-asc">Amount: Low→High</option>
+        <option value="name">Name A–Z</option>
+      </select>
+    </div>
+    <div class="pills">
+      <button class="pill active" onclick="setFilter('all',this)">All</button>
+      <button class="pill" onclick="setFilter('today',this)">📅 Today</button>
+      <button class="pill" onclick="setFilter('overdue',this)">⚠️ Overdue</button>
+      <button class="pill" onclick="setFilter('upcoming',this)">🔔 Next 7d</button>
+      <button class="pill" onclick="setFilter('pending',this)">⏳ Pending</button>
+      <button class="pill" onclick="setFilter('cleared',this)">🔵 Cleared</button>
+      <button class="pill" onclick="setFilter('bounced',this)">🔴 Bounced</button>
+    </div>
+    <div id="checksContainer"></div>
+  </div>
+</div>
+<div class="panel" id="panel-today">
+  <div class="card" style="padding:16px;">
+    <div class="card-title" style="color:var(--green);">📅 Today's Schedule — <span id="todayLabel" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--green);"></span></div>
+    <div id="todayContainer"></div>
+  </div>
+</div>
+<div class="panel" id="panel-bounced">
+  <div class="card" style="padding:16px;">
+    <div class="card-title" style="color:var(--red);">🔴 Bounced Check Log</div>
+    <div id="bouncedContainer"></div>
+  </div>
+</div>
+<div class="panel" id="panel-stats">
+  <div class="stats-grid" id="statsGrid"></div>
+  <div class="card" style="padding:16px;margin-bottom:12px;">
+    <div class="card-title">📅 Upcoming — Next 30 Days</div>
+    <div id="upcomingSched"></div>
+  </div>
+  <div class="card" style="padding:16px;">
+    <div class="card-title">👥 All Customers</div>
+    <div id="custsSummary"></div>
+  </div>
+</div>
+</div>
+<div class="mo" id="moBounce">
+  <div class="md">
+    <div class="md-title">🔴 Log Bounced Check</div>
+    <input type="hidden" id="mBounceId"/>
+    <div class="fg" style="margin-bottom:11px;"><label>Reason</label>
+      <select id="mBounceReason">
+        <option>NSF – Non-Sufficient Funds</option>
+        <option>Account Closed</option>
+        <option>Stop Payment</option>
+        <option>Signature Mismatch</option>
+        <option>Stale / Expired Check</option>
+        <option>Refer to Maker</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="fg" style="margin-bottom:11px;"><label>Return Date</label><input type="date" id="mBounceDate"/></div>
+    <div class="fg"><label>Notes</label><textarea id="mBounceNote" rows="3" placeholder="Details..."></textarea></div>
+    <div class="md-actions">
+      <button class="btn btn-cancel" onclick="closeMo('moBounce')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmBounce()">🔴 Confirm Bounce</button>
+    </div>
+  </div>
+</div>
+<div class="mo" id="moView">
+  <div class="md" style="max-width:520px;">
+    <div class="md-title">📄 Check Details</div>
+    <div id="moViewContent"></div>
+    <div class="md-actions"><button class="btn btn-cancel" onclick="closeMo('moView')">Close</button></div>
+  </div>
+</div>
+<div class="mo" id="moEdit">
+  <div class="md wide">
+    <div class="md-title">✏️ Edit Check</div>
+    <input type="hidden" id="edit-id"/>
+    <div class="grid" style="margin-bottom:13px;">
+      <div class="fg"><label>🏪 Store Name</label><input type="text" id="edit-store"/></div>
+      <div class="fg"><label>📍 Address</label><input type="text" id="edit-address"/></div>
+      <div class="fg"><label>💰 Amount ($)</label><input type="number" id="edit-amount" step="0.01" min="0.01" class="mono"/></div>
+      <div class="fg"><label>🔢 Check Number</label><input type="text" id="edit-checknum" class="mono"/></div>
+      <div class="fg"><label>🏛️ Routing Number</label><input type="text" id="edit-routing" class="mono"/></div>
+      <div class="fg"><label>💳 Account Number</label><input type="text" id="edit-account" class="mono"/></div>
+      <div class="fg"><label>📋 Check Date</label><input type="date" id="edit-date"/></div>
+      <div class="fg"><label class="gl">🏦 Deposit / Due Date</label><input type="date" id="edit-deposit" style="border-color:rgba(34,197,94,0.25);"/></div>
+      <div class="fg"><label>🏦 Bank Name</label><input type="text" id="edit-bank"/></div>
+      <div class="fg"><label>📊 Status</label>
+        <select id="edit-status">
+          <option value="pending">⏳ Pending</option>
+          <option value="active">✅ Active</option>
+          <option value="cleared">🔵 Cleared</option>
+          <option value="bounced">🔴 Bounced</option>
+        </select>
+      </div>
+      <div class="fg"><label>📞 Phone</label><input type="text" id="edit-phone"/></div>
+      <div class="fg full"><label>📝 Notes</label><textarea id="edit-notes" rows="2"></textarea></div>
+    </div>
+    <div class="md-actions">
+      <button class="btn btn-cancel" onclick="closeMo('moEdit')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+// Firebase Config - Realtime Database (no CORS issues)
+const firebaseConfig = {
+  apiKey: "AIzaSyC2vBuqMNoJxB9LuVr4r0yiRvsFzSRRMIg",
+  authDomain: "kwholesale-checks.firebaseapp.com",
+  databaseURL: "https://kwholesale-checks-default-rtdb.firebaseio.com",
+  projectId: "kwholesale-checks",
+  storageBucket: "kwholesale-checks.firebasestorage.app",
+  messagingSenderId: "523847291",
+  appId: "1:523847291:web:a1b2c3d4e5f67890"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const checksRef = db.ref('checks');
+
+var checks = [];
+var curFilter = 'all';
+var searchType = 'name';
+
+// HELPERS
+function todayStr(){return new Date().toISOString().split('T')[0];}
+function ddiff(a,b){return Math.round((new Date(a)-new Date(b))/86400000);}
+function dStatus(c){
+  if(!c.depositDate||c.status==='cleared')return 'none';
+  var d=ddiff(c.depositDate,todayStr());
+  if(d===0)return 'today';if(d<0)return 'overdue';if(d<=7)return 'upcoming';return 'future';
+}
+function fmtD(d){if(!d)return '—';var p=d.split('-');return p[1]+'/'+p[2]+'/'+p[0];}
+function fmtLong(d){if(!d)return'';return new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});}
+function fmt(n){return parseFloat(n||0).toLocaleString('en-US',{minimumFractionDigits:2});}
+function mask(n){return n&&n.length>4?'****'+n.slice(-4):(n||'—');}
+function initial(name){return(name||'?').trim().split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);}
+function saveLocal(){try{localStorage.setItem('kwh_checks',JSON.stringify(checks));}catch(e){}}
+function loadLocal(){try{var d=localStorage.getItem('kwh_checks');if(d)checks=JSON.parse(d);}catch(e){}}
+
+function setSyncStatus(status,msg){
+  var dot=document.getElementById('syncDot');
+  var txt=document.getElementById('syncText');
+  dot.className='sync-dot '+status;
+  txt.textContent=msg;
+}
+
+function startFirebaseSync(){
+  setSyncStatus('syncing','Connecting to Cloud...');
+  checksRef.on('value',function(snap){
+    var data=snap.val();
+    if(data){
+      checks=Object.values(data).map(function(c){
+        return Object.assign({},c,{bounces:Array.isArray(c.bounces)?c.bounces:[]});
+      });
+      checks.sort(function(a,b){return new Date(b.createdAt)-new Date(a.createdAt);});
+    } else {
+      checks=[];
+    }
+    saveLocal();
+    setSyncStatus('online','☁️ Cloud Sync Active');
+    document.getElementById('syncTime').textContent='Last sync: '+new Date().toLocaleTimeString();
+    refreshAll();
+  },function(err){
+    console.error('Firebase error:',err);
+    setSyncStatus('offline','⚠️ Offline — using local data');
+    loadLocal();
+    refreshAll();
+  });
+}
+
+function syncNow(){startFirebaseSync();}
+
+function saveToCloud(check){
+  checksRef.child(check.id).set(check).then(function(){
+    setSyncStatus('online','☁️ Saved to Cloud');
+    document.getElementById('syncTime').textContent='Last sync: '+new Date().toLocaleTimeString();
+  }).catch(function(e){
+    console.error('Save error:',e);
+    setSyncStatus('offline','⚠️ Saved locally');
+  });
+}
+
+function deleteFromCloud(id){
+  checksRef.child(id).remove().catch(function(e){console.error('Delete error:',e);});
+}
+
+function refreshAll(){
+  refreshAlerts();updateHeader();refreshStoreList();
+  var active=document.querySelector('.panel.active');
+  if(active){
+    var id=active.id;
+    if(id==='panel-checks')renderChecks();
+    if(id==='panel-today')renderToday();
+    if(id==='panel-bounced')renderBounced();
+    if(id==='panel-stats')renderStats();
+  }
+}
+
+function showTab(name,el){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.getElementById('panel-'+name).classList.add('active');
+  el.classList.add('active');
+  if(name==='checks')renderChecks();
+  if(name==='today')renderToday();
+  if(name==='bounced')renderBounced();
+  if(name==='stats')renderStats();
+}
+
+function refreshStoreList(){
+  var names=[...new Set(checks.map(function(c){return c.store;}))].sort();
+  document.getElementById('store-list').innerHTML=names.map(function(n){return'<option value="'+n+'">';}).join('');
+}
+
+function addCheck(){
+  var store=document.getElementById('f-store').value.trim();
+  var amount=parseFloat(document.getElementById('f-amount').value);
+  var checknum=document.getElementById('f-checknum').value.trim();
+  if(!store){showToast('⚠️ Enter Store / Customer Name');return;}
+  if(!checknum){showToast('⚠️ Enter Check Number');return;}
+  if(isNaN(amount)||amount<=0){showToast('⚠️ Enter valid Amount (must be > 0)');return;}
+  var check={
+    id:Date.now().toString(),store:store,amount:amount,checknum:checknum,
+    address:document.getElementById('f-address').value.trim(),
+    routing:document.getElementById('f-routing').value.trim(),
+    account:document.getElementById('f-account').value.trim(),
+    date:document.getElementById('f-date').value||todayStr(),
+    depositDate:document.getElementById('f-deposit').value||'',
+    bank:document.getElementById('f-bank').value.trim(),
+    status:document.getElementById('f-status').value,
+    phone:document.getElementById('f-phone').value.trim(),
+    notes:document.getElementById('f-notes').value.trim(),
+    createdAt:new Date().toISOString(),
+    bounces:[]
+  };
+  checks.unshift(check);
+  saveLocal();refreshAll();clearForm();
+  showToast('✅ Check saved!');
+  saveToCloud(check);
+}
+
+function clearForm(){
+  ['f-store','f-address','f-amount','f-checknum','f-routing','f-account','f-bank','f-phone','f-notes']
+    .forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('f-date').value=todayStr();
+  document.getElementById('f-deposit').value='';
+  document.getElementById('f-status').value='pending';
+}
+
+function markCleared(id){
+  var c=checks.find(function(x){return x.id===id;});if(!c)return;
+  c.status='cleared';saveLocal();refreshAll();renderChecks();
+  showToast('✅ Marked as Cleared');saveToCloud(c);
+}
+
+function deleteCheck(id){
+  if(!confirm('Delete this check? Cannot be undone.'))return;
+  checks=checks.filter(function(c){return c.id!==id;});
+  saveLocal();refreshAll();renderChecks();
+  showToast('🗑 Deleted');deleteFromCloud(id);
+}
+
+function openEdit(id){
+  var c=checks.find(function(x){return x.id===id;});if(!c)return;
+  document.getElementById('edit-id').value=id;
+  document.getElementById('edit-store').value=c.store||'';
+  document.getElementById('edit-address').value=c.address||'';
+  document.getElementById('edit-amount').value=c.amount||'';
+  document.getElementById('edit-checknum').value=c.checknum||'';
+  document.getElementById('edit-routing').value=c.routing||'';
+  document.getElementById('edit-account').value=c.account||'';
+  document.getElementById('edit-date').value=c.date||'';
+  document.getElementById('edit-deposit').value=c.depositDate||'';
+  document.getElementById('edit-bank').value=c.bank||'';
+  document.getElementById('edit-status').value=c.status||'pending';
+  document.getElementById('edit-phone').value=c.phone||'';
+  document.getElementById('edit-notes').value=c.notes||'';
+  document.getElementById('moEdit').classList.add('open');
+}
+
+function saveEdit(){
+  var id=document.getElementById('edit-id').value;
+  var c=checks.find(function(x){return x.id===id;});if(!c)return;
+  var amount=parseFloat(document.getElementById('edit-amount').value);
+  if(!document.getElementById('edit-store').value.trim()||isNaN(amount)||amount<=0){showToast('⚠️ Store Name and Amount required');return;}
+  c.store=document.getElementById('edit-store').value.trim();
+  c.address=document.getElementById('edit-address').value.trim();
+  c.amount=amount;
+  c.checknum=document.getElementById('edit-checknum').value.trim();
+  c.routing=document.getElementById('edit-routing').value.trim();
+  c.account=document.getElementById('edit-account').value.trim();
+  c.date=document.getElementById('edit-date').value;
+  c.depositDate=document.getElementById('edit-deposit').value;
+  c.bank=document.getElementById('edit-bank').value.trim();
+  c.status=document.getElementById('edit-status').value;
+  c.phone=document.getElementById('edit-phone').value.trim();
+  c.notes=document.getElementById('edit-notes').value.trim();
+  closeMo('moEdit');saveLocal();refreshAll();renderChecks();
+  showToast('✅ Check updated!');saveToCloud(c);
+}
+
+function setSearchType(type){
+  searchType=type;
+  document.querySelectorAll('.stype-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('st-'+type).classList.add('active');
+  document.getElementById('search-name-wrap').style.display=type==='amount'?'none':'block';
+  document.getElementById('search-amount-wrap').style.display=type==='amount'?'block':'none';
+  clearSearch();
+}
+
+function onSearch(){
+  var q=(document.getElementById('srchInput')||{value:''}).value.trim();
+  var sc=document.getElementById('srchClear');
+  if(sc)sc.classList.toggle('show',q.length>0);
+  document.getElementById('srchSugs').classList.remove('open');
+  if(searchType==='name')searchByName(q);
+  else if(searchType==='check')searchByCheck(q);
+  else searchByAmount();
+}
+
+function getCustomers(){
+  var map={};
+  checks.forEach(function(c){
+    if(!map[c.store])map[c.store]={name:c.store,phone:c.phone,address:c.address,checks:[]};
+    if(c.phone&&!map[c.store].phone)map[c.store].phone=c.phone;
+    map[c.store].checks.push(c);
+  });
+  return map;
+}
+
+function searchByName(q){
+  var sug=document.getElementById('srchSugs');
+  var el=document.getElementById('searchResult');
+  if(!q){el.innerHTML='<div class="empty"><div class="e">🏪</div><p>Type a customer name</p></div>';return;}
+  var custs=Object.values(getCustomers()).filter(function(c){return c.name.toLowerCase().indexOf(q.toLowerCase())>=0;});
+  if(!custs.length){sug.classList.remove('open');el.innerHTML='<div class="empty"><div class="e">🔍</div><p>No customer found for "'+q+'"</p></div>';return;}
+  sug.innerHTML=custs.slice(0,8).map(function(c){
+    var tot=c.checks.reduce(function(s,x){return s+x.amount;},0);
+    var bn=c.checks.filter(function(x){return x.bounces&&x.bounces.length>0;}).length;
+    return'<div class="sug-item" onclick="selectCustomer(\''+c.name.replace(/'/g,"\\'")+'\')">'
+      +'<div style="display:flex;align-items:center;gap:10px;"><div class="sug-avatar">'+initial(c.name)+'</div>'
+      +'<div><div class="sug-name">'+c.name+'</div><div class="sug-phone">'+(c.phone?'📞 '+c.phone:'')+'</div></div></div>'
+      +'<div style="display:flex;gap:8px;align-items:center;">'
+      +'<span class="sug-cnt">'+c.checks.length+' checks</span>'
+      +(bn?'<span class="badge b-bounced" style="font-size:9px;">🔴'+bn+'</span>':'')
+      +'<span class="sug-amt">$'+fmt(tot)+'</span></div></div>';
+  }).join('');
+  sug.classList.add('open');
+  if(custs.length===1)renderCustProfile(custs[0].name);
+  else el.innerHTML='<div class="empty"><div class="e">👆</div><p>Select a customer above</p></div>';
+}
+
+function selectCustomer(name){
+  document.getElementById('srchInput').value=name;
+  document.getElementById('srchSugs').classList.remove('open');
+  document.getElementById('srchClear').classList.add('show');
+  renderCustProfile(name);
+}
+
+function renderCustProfile(name){
+  var el=document.getElementById('searchResult');
+  var custs=getCustomers();var cust=custs[name];
+  if(!cust){el.innerHTML='<div class="empty"><div class="e">🔍</div><p>Not found</p></div>';return;}
+  var chks=cust.checks.sort(function(a,b){return(b.depositDate||b.date)<(a.depositDate||a.date)?-1:1;});
+  var tot=chks.reduce(function(s,c){return s+c.amount;},0);
+  var bn=chks.filter(function(c){return c.bounces&&c.bounces.length>0;}).length;
+  var cl=chks.filter(function(c){return c.status==='cleared';}).length;
+  var pd=chks.filter(function(c){return c.status==='pending'||c.status==='active';}).length;
+  el.innerHTML='<div class="cust-profile">'
+    +'<div class="cust-profile-header">'
+    +'<div style="display:flex;align-items:center;gap:14px;"><div class="cust-avatar">'+initial(name)+'</div>'
+    +'<div><div class="cust-name">'+name+'</div>'
+    +'<div class="cust-sub">'+(cust.phone?'📞 '+cust.phone:'')+(cust.address?' · 📍 '+cust.address:'')+'</div></div></div>'
+    +'<div class="cust-stats-row">'
+    +'<div class="cust-stat"><span class="v vo">'+chks.length+'</span><span class="l">Checks</span></div>'
+    +'<div class="cust-stat"><span class="v vg">$'+tot.toLocaleString('en-US',{maximumFractionDigits:0})+'</span><span class="l">Total</span></div>'
+    +'<div class="cust-stat"><span class="v vb">'+cl+'</span><span class="l">Cleared</span></div>'
+    +'<div class="cust-stat"><span class="v" style="color:var(--yellow);">'+pd+'</span><span class="l">Pending</span></div>'
+    +'<div class="cust-stat"><span class="v '+(bn>0?'vr':'vg')+'">'+bn+'</span><span class="l">Bounced</span></div>'
+    +'</div></div>'
+    +'<div class="cust-checks-wrap">'
+    +'<div class="sec-title">Full Check History ('+chks.length+')</div>'
+    +chks.map(function(c){
+      var ds=dStatus(c);
+      var depTxt=!c.depositDate?'<span style="color:var(--dim);">—</span>':
+        ds==='today'?'<span class="dep-tag today">🏦 TODAY</span>':
+        ds==='overdue'?'<span class="dep-tag overdue">⚠️ '+fmtD(c.depositDate)+' · '+Math.abs(ddiff(c.depositDate,todayStr()))+'d late</span>':
+        ds==='upcoming'?'<span class="dep-tag upcoming">🔔 '+fmtD(c.depositDate)+' · in '+ddiff(c.depositDate,todayStr())+'d</span>':
+        '<span class="dep-tag future">'+fmtD(c.depositDate)+'</span>';
+      var bb=(c.bounces&&c.bounces.length)?'<span class="badge b-bounced" style="font-size:9px;">🔴'+c.bounces.length+'x</span>':'';
+      return'<div class="cri '+(ds==='today'?'ct':ds==='overdue'?'ov':ds==='upcoming'?'up':'')+'">'
+        +'<div style="display:flex;align-items:center;gap:11px;"><div class="cri-icon">🏦</div>'
+        +'<div><div class="cri-store">Check #'+c.checknum+'</div>'
+        +'<div class="cri-num">'+fmtD(c.date)+(c.bank?' · '+c.bank:'')+'</div>'
+        +(c.notes?'<div style="font-size:11px;color:var(--dim);">📝 '+c.notes+'</div>':'')
+        +'</div></div>'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+        +depTxt+' '+bb+' '+statusBadge(c.status)
+        +'<div class="cri-amount">$'+fmt(c.amount)+'</div>'
+        +'<button class="btn btn-sm btn-blue" onclick="viewCheck(\''+c.id+'\')">👁</button>'
+        +'<button class="btn btn-sm btn-orange" onclick="openEdit(\''+c.id+'\')">✏️</button>'
+        +(c.status!=='bounced'?'<button class="btn btn-sm btn-warning" onclick="openBounce(\''+c.id+'\')">🔴</button>':'')
+        +'</div></div>';
+    }).join('')
+    +'<div class="cust-total-row">'
+    +'<span style="font-size:12px;font-weight:700;color:var(--orange2);text-transform:uppercase;">💰 Total — '+chks.length+' Checks</span>'
+    +'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:18px;font-weight:700;color:var(--green);">$'+fmt(tot)+'</span>'
+    +'</div></div></div>';
+}
+
+function searchByCheck(q){
+  var el=document.getElementById('searchResult');
+  if(!q){el.innerHTML='<div class="empty"><div class="e">🔢</div><p>Type a check number</p></div>';return;}
+  var found=checks.filter(function(c){return c.checknum.indexOf(q)>=0;});
+  if(!found.length){el.innerHTML='<div class="empty"><div class="e">🔍</div><p>No check # "'+q+'"</p></div>';return;}
+  renderResultList(found,'🔢 Check # "'+q+'" — '+found.length+' result'+(found.length!==1?'s':''));
+}
+
+function searchByAmount(){
+  var mn=parseFloat(document.getElementById('amt-min').value)||0;
+  var mx=parseFloat(document.getElementById('amt-max').value)||Infinity;
+  var found=checks.filter(function(c){return c.amount>=mn&&c.amount<=mx;});
+  var el=document.getElementById('searchResult');
+  if(!found.length){el.innerHTML='<div class="empty"><div class="e">💰</div><p>No checks in range</p></div>';return;}
+  renderResultList(found,'💰 $'+fmt(mn)+' – '+(mx===Infinity?'Any':'$'+fmt(mx))+' — '+found.length+' result'+(found.length!==1?'s':''));
+}
+
+function renderResultList(list,title){
+  var el=document.getElementById('searchResult');
+  var tot=list.reduce(function(s,c){return s+c.amount;},0);
+  el.innerHTML='<div style="margin-bottom:13px;padding:11px 15px;background:rgba(255,137,0,0.07);border:1px solid rgba(255,137,0,0.2);border-radius:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">'
+    +'<span style="font-weight:700;font-size:13px;color:var(--orange2);">'+title+'</span>'
+    +'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:15px;font-weight:700;color:var(--green);">$'+fmt(tot)+'</span></div>'
+    +list.map(function(c){
+      var ds=dStatus(c);
+      var depTag=!c.depositDate?'<span class="dep-tag none">No date</span>':
+        ds==='today'?'<span class="dep-tag today">🏦 TODAY</span>':
+        ds==='overdue'?'<span class="dep-tag overdue">⚠️ '+fmtD(c.depositDate)+'</span>':
+        ds==='upcoming'?'<span class="dep-tag upcoming">🔔 '+fmtD(c.depositDate)+'</span>':
+        '<span class="dep-tag future">'+fmtD(c.depositDate)+'</span>';
+      return'<div class="cri '+(ds==='today'?'ct':ds==='overdue'?'ov':ds==='upcoming'?'up':'')+'">'
+        +'<div style="display:flex;align-items:center;gap:11px;"><div class="cri-icon">🏦</div>'
+        +'<div><div class="cri-store">'+c.store+'</div><div class="cri-num">Check #'+c.checknum+(c.bank?' · '+c.bank:'')+'</div></div></div>'
+        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+depTag+' '+statusBadge(c.status)
+        +'<div class="cri-amount">$'+fmt(c.amount)+'</div>'
+        +'<button class="btn btn-sm btn-blue" onclick="viewCheck(\''+c.id+'\')">👁</button>'
+        +'<button class="btn btn-sm btn-orange" onclick="openEdit(\''+c.id+'\')">✏️</button>'
+        +'</div></div>';
+    }).join('');
+}
+
+function clearSearch(){
+  var si=document.getElementById('srchInput');if(si)si.value='';
+  var sc=document.getElementById('srchClear');if(sc)sc.classList.remove('show');
+  var ss=document.getElementById('srchSugs');if(ss)ss.classList.remove('open');
+  var amn=document.getElementById('amt-min');if(amn)amn.value='';
+  var amx=document.getElementById('amt-max');if(amx)amx.value='';
+  document.getElementById('searchResult').innerHTML='<div class="empty"><div class="e">🔍</div><p>Choose a search type and start typing</p></div>';
+}
+
+function refreshAlerts(){
+  var ts=todayStr();
+  var dt=checks.filter(function(c){return c.status!=='cleared'&&c.status!=='bounced'&&dStatus(c)==='today';});
+  var ov=checks.filter(function(c){return c.status!=='cleared'&&dStatus(c)==='overdue';});
+  var up=checks.filter(function(c){return c.status!=='cleared'&&dStatus(c)==='upcoming';});
+  document.getElementById('bToday').classList.toggle('has',dt.length>0);
+  document.getElementById('bTodayCount').textContent=dt.length+' check'+(dt.length!==1?'s':'');
+  document.getElementById('bTodayAmt').textContent='$'+fmt(dt.reduce(function(s,c){return s+c.amount;},0));
+  document.getElementById('bTodayBody').innerHTML=dt.map(function(c){
+    return'<div class="today-row"><div><div style="font-weight:700;font-size:13px;">🏦 '+c.store+'</div>'
+      +'<div style="font-size:11px;color:var(--dim);">Check #'+c.checknum+(c.bank?' · '+c.bank:'')+(c.phone?' · 📞 '+c.phone:'')+'</div></div>'
+      +'<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">'
+      +'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:15px;font-weight:700;color:var(--green);">$'+fmt(c.amount)+'</span>'
+      +'<button class="btn btn-sm btn-success" onclick="markCleared(\''+c.id+'\')">✅ Cleared</button>'
+      +'<button class="btn btn-sm btn-danger" onclick="openBounce(\''+c.id+'\')">🔴</button>'
+      +'</div></div>';
+  }).join('');
+  document.getElementById('bOverdue').classList.toggle('has',ov.length>0);
+  document.getElementById('bOverdueCount').textContent=ov.length;
+  document.getElementById('bOverdueBody').innerHTML=ov.map(function(c){var d=Math.abs(ddiff(c.depositDate,ts));return'<div class="alert-row ov"><div><div class="ar-name">'+c.store+'</div><div class="ar-sub">Check #'+c.checknum+' · Due '+fmtD(c.depositDate)+'</div></div><div style="display:flex;gap:7px;align-items:center;"><span class="days-badge ov">'+d+'d late</span><span style="font-family:\'IBM Plex Mono\',monospace;color:var(--red);font-weight:600;">$'+fmt(c.amount)+'</span></div></div>';}).join('');
+  document.getElementById('bUpcoming').classList.toggle('has',up.length>0);
+  document.getElementById('bUpcomingCount').textContent=up.length;
+  document.getElementById('bUpcomingBody').innerHTML=up.map(function(c){var d=ddiff(c.depositDate,ts);return'<div class="alert-row up"><div><div class="ar-name">'+c.store+'</div><div class="ar-sub">Check #'+c.checknum+' · Due '+fmtD(c.depositDate)+'</div></div><div style="display:flex;gap:7px;align-items:center;"><span class="days-badge up">in '+d+'d</span><span style="font-family:\'IBM Plex Mono\',monospace;color:var(--yellow);font-weight:600;">$'+fmt(c.amount)+'</span></div></div>';}).join('');
+  var tTab=document.getElementById('tab-today');
+  var badge=tTab.querySelector('.tc');
+  if(dt.length>0){if(!badge){badge=document.createElement('span');badge.className='tc';tTab.appendChild(badge);}badge.textContent=dt.length;}
+  else if(badge)badge.remove();
+}
+
+function toggleBanner(id){var el=document.getElementById(id);el.classList.toggle('collapsed');var body=el.querySelector('.ab-body');if(body)body.style.display=el.classList.contains('collapsed')?'none':'block';}
+
+function statusBadge(s){
+  var map={active:'<span class="badge b-active"><span class="dot"></span>Active</span>',bounced:'<span class="badge b-bounced"><span class="dot"></span>Bounced</span>',pending:'<span class="badge b-pending"><span class="dot"></span>Pending</span>',cleared:'<span class="badge b-cleared"><span class="dot"></span>Cleared</span>'};
+  return map[s]||'';
+}
+
+function setFilter(f,el){
+  curFilter=f;
+  document.querySelectorAll('.pills .pill').forEach(function(p){p.classList.remove('active');});
+  el.classList.add('active');renderChecks();
+}
+
+function fMatch(c){
+  if(curFilter==='all')return true;
+  if(curFilter==='today')return dStatus(c)==='today';
+  if(curFilter==='overdue')return dStatus(c)==='overdue';
+  if(curFilter==='upcoming')return dStatus(c)==='upcoming';
+  return c.status===curFilter;
+}
+
+function renderChecks(){
+  var q=(document.getElementById('siAll')?document.getElementById('siAll').value:'').toLowerCase();
+  var srt=document.getElementById('sortSel')?document.getElementById('sortSel').value:'dep-asc';
+  var list=checks.filter(function(c){
+    var m=!q||c.store.toLowerCase().indexOf(q)>=0||c.checknum.indexOf(q)>=0||(c.bank||'').toLowerCase().indexOf(q)>=0||(c.address||'').toLowerCase().indexOf(q)>=0;
+    return m&&fMatch(c);
+  });
+  list.sort(function(a,b){
+    if(srt==='dep-asc')return(a.depositDate||'9999')<(b.depositDate||'9999')?-1:1;
+    if(srt==='dep-desc')return(a.depositDate||'9999')>(b.depositDate||'9999')?-1:1;
+    if(srt==='date-desc')return new Date(b.createdAt)-new Date(a.createdAt);
+    if(srt==='amt-desc')return b.amount-a.amount;
+    if(srt==='amt-asc')return a.amount-b.amount;
+    if(srt==='name')return a.store.localeCompare(b.store);
+    return 0;
+  });
+  var el=document.getElementById('checksContainer');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="e">📭</div><p>No checks found</p></div>';return;}
+  el.innerHTML='<div class="cards-grid">'+list.map(checkCard).join('')+'</div>';
+}
+
+function getDepRow(c){
+  if(!c.depositDate)return'';
+  var ds=dStatus(c);
+  if(ds==='none')return'<div class="dep-row cleared">✅ Cleared — '+fmtD(c.depositDate)+'</div>';
+  if(ds==='today')return'<div class="dep-row today">🏦 Hits Bank TODAY</div>';
+  if(ds==='overdue'){var d=Math.abs(ddiff(c.depositDate,todayStr()));return'<div class="dep-row overdue">⚠️ OVERDUE '+d+'d — '+fmtD(c.depositDate)+'</div>';}
+  if(ds==='upcoming'){var d2=ddiff(c.depositDate,todayStr());return'<div class="dep-row upcoming">🔔 Due in '+d2+'d — '+fmtD(c.depositDate)+'</div>';}
+  return'<div class="dep-row future">📅 '+fmtD(c.depositDate)+'</div>';
+}
+
+function checkCard(c){
+  var ds=dStatus(c);var cl=ds==='today'?'ct':ds==='overdue'?'ov':ds==='upcoming'?'up':'';
+  var bb=(c.bounces&&c.bounces.length)?'<span class="badge b-bounced" style="font-size:9px;">🔴'+c.bounces.length+'x</span>':'';
+  return'<div class="chk-card '+cl+'">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">'
+    +'<div><div class="chk-store">'+c.store+'</div><div class="chk-num">Check # '+c.checknum+'</div></div>'
+    +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">'+statusBadge(c.status)+bb+'</div></div>'
+    +'<div class="chk-amount">$'+fmt(c.amount)+'</div>'
+    +getDepRow(c)
+    +(c.address?'<div class="chk-det">📍 <strong>'+c.address+'</strong></div>':'')
+    +(c.bank?'<div class="chk-det">🏦 <strong>'+c.bank+'</strong></div>':'')
+    +(c.phone?'<div class="chk-det">📞 <strong>'+c.phone+'</strong></div>':'')
+    +'<div class="chk-det">📋 <strong>'+fmtD(c.date)+'</strong></div>'
+    +(c.routing?'<div class="chk-det mono" style="font-size:11px;">RTN: '+mask(c.routing)+'</div>':'')
+    +'<div class="chk-actions">'
+    +'<button class="btn btn-sm btn-blue" onclick="viewCheck(\''+c.id+'\')">👁 View</button>'
+    +'<button class="btn btn-sm btn-orange" onclick="openEdit(\''+c.id+'\')">✏️ Edit</button>'
+    +(c.status!=='bounced'?'<button class="btn btn-sm btn-warning" onclick="openBounce(\''+c.id+'\')">🔴</button>':'')
+    +'<button class="btn btn-sm btn-success" onclick="markCleared(\''+c.id+'\')">✅</button>'
+    +'<button class="btn btn-sm btn-danger" onclick="deleteCheck(\''+c.id+'\')">🗑</button>'
+    +'</div></div>';
+}
+
+function renderToday(){
+  var ts=todayStr();
+  document.getElementById('todayLabel').textContent=fmtLong(ts);
+  var dt=checks.filter(function(c){return c.status!=='cleared'&&dStatus(c)==='today';});
+  var ov=checks.filter(function(c){return c.status!=='cleared'&&dStatus(c)==='overdue';});
+  var up=checks.filter(function(c){return c.status!=='cleared'&&dStatus(c)==='upcoming';});
+  var html='';
+  if(!dt.length&&!ov.length&&!up.length){html='<div class="empty"><div class="e">🎉</div><p>No checks due today!</p></div>';}
+  if(dt.length){
+    var tot=dt.reduce(function(s,c){return s+c.amount;},0);
+    html+='<div class="sec-title">🏦 Hitting the Bank TODAY ('+dt.length+')</div>';
+    html+=dt.map(function(c){return'<div class="today-row" style="margin-bottom:7px;"><div><div style="font-weight:700;font-size:13px;">'+c.store+'</div><div style="font-size:11px;color:var(--dim);">Check #'+c.checknum+(c.bank?' · '+c.bank:'')+(c.phone?' · 📞 '+c.phone:'')+'</div></div><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;"><span style="font-family:\'IBM Plex Mono\',monospace;font-size:16px;font-weight:700;color:var(--green);">$'+fmt(c.amount)+'</span><button class="btn btn-sm btn-success" onclick="markCleared(\''+c.id+'\');renderToday()">✅ Cleared</button><button class="btn btn-sm btn-danger" onclick="openBounce(\''+c.id+'\')">🔴</button></div></div>';}).join('');
+    html+='<div style="text-align:right;padding:8px 13px;font-family:\'IBM Plex Mono\',monospace;font-size:14px;color:var(--green);font-weight:700;border-top:1px dashed rgba(34,197,94,0.2);margin-bottom:8px;">Today\'s Total: $'+fmt(tot)+'</div>';
+  }
+  if(ov.length){
+    html+='<div class="sec-title">⚠️ Overdue ('+ov.length+')</div>';
+    html+=ov.sort(function(a,b){return a.depositDate<b.depositDate?-1:1;}).map(function(c){var d=Math.abs(ddiff(c.depositDate,ts));return'<div class="alert-row ov" style="margin-bottom:6px;"><div><div class="ar-name">'+c.store+'</div><div class="ar-sub">Check #'+c.checknum+' · Due '+fmtD(c.depositDate)+(c.phone?' · 📞 '+c.phone:'')+'</div></div><div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;"><span class="days-badge ov">'+d+'d late</span><span style="font-family:\'IBM Plex Mono\',monospace;color:var(--red);font-weight:600;">$'+fmt(c.amount)+'</span><button class="btn btn-sm btn-success" onclick="markCleared(\''+c.id+'\');renderToday()">✅</button></div></div>';}).join('');
+  }
+  if(up.length){
+    html+='<div class="sec-title">🔔 Next 7 Days ('+up.length+')</div>';
+    html+=up.sort(function(a,b){return a.depositDate<b.depositDate?-1:1;}).map(function(c){var d=ddiff(c.depositDate,ts);return'<div class="alert-row up" style="margin-bottom:6px;"><div><div class="ar-name">'+c.store+' <span style="font-size:11px;color:var(--dim);">· '+fmtD(c.depositDate)+'</span></div><div class="ar-sub">Check #'+c.checknum+(c.bank?' · '+c.bank:'')+(c.phone?' · 📞 '+c.phone:'')+'</div></div><div style="display:flex;gap:7px;align-items:center;"><span class="days-badge up">in '+d+'d</span><span style="font-family:\'IBM Plex Mono\',monospace;color:var(--yellow);font-weight:600;">$'+fmt(c.amount)+'</span></div></div>';}).join('');
+  }
+  document.getElementById('todayContainer').innerHTML=html;
+}
+
+function renderBounced(){
+  var list=checks.filter(function(c){return c.bounces&&c.bounces.length>0;});
+  var el=document.getElementById('bouncedContainer');
+  if(!list.length){el.innerHTML='<div class="empty"><div class="e">✅</div><p>No bounced checks!</p></div>';return;}
+  el.innerHTML=list.map(function(c){return'<div class="chk-card" style="margin-bottom:10px;"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px;"><div><div class="chk-store">'+c.store+'</div><div class="chk-num">Check #'+c.checknum+(c.bank?' · '+c.bank:'')+'</div>'+(c.phone?'<div style="font-size:11px;color:var(--dim);">📞 '+c.phone+'</div>':'')+'</div><div><div class="chk-amount" style="font-size:17px;margin:0;">$'+fmt(c.amount)+'</div><span class="badge b-bounced" style="margin-top:5px;">🔴 '+c.bounces.length+'x</span></div></div><div class="bl"><div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:5px;letter-spacing:0.7px;text-transform:uppercase;">Return History</div>'+c.bounces.map(function(b){return'<div class="bl-entry"><div style="display:flex;justify-content:space-between;"><div class="bl-reason">'+b.reason+'</div><div style="font-size:10px;font-family:\'IBM Plex Mono\',monospace;color:var(--dim);">'+b.date+'</div></div>'+(b.note?'<div class="bl-note">📝 '+b.note+'</div>':'')+'</div>';}).join('')+'</div><div class="chk-actions" style="margin-top:9px;"><button class="btn btn-sm btn-warning" onclick="openBounce(\''+c.id+'\')">➕ Add Return</button><button class="btn btn-sm btn-success" onclick="markCleared(\''+c.id+'\')">✅ Settled</button><button class="btn btn-sm btn-blue" onclick="viewCheck(\''+c.id+'\')">👁 View</button><button class="btn btn-sm btn-orange" onclick="openEdit(\''+c.id+'\')">✏️ Edit</button></div></div>';}).join('');
+}
+
+function viewCheck(id){
+  var c=checks.find(function(x){return x.id===id;});if(!c)return;
+  document.getElementById('moViewContent').innerHTML='<div class="chk-prev"><div style="display:flex;justify-content:space-between;margin-bottom:8px;"><div><div class="cp-lbl">Pay to the Order of</div><div style="font-weight:700;font-size:14px;">'+c.store+'</div>'+(c.address?'<div style="font-size:10px;color:#888;">'+c.address+'</div>':'')+'</div><div style="text-align:right;"><div class="cp-lbl">Date</div><div class="cp-val">'+fmtD(c.date)+'</div></div></div><div class="cp-amount">$ '+fmt(c.amount)+'</div><hr class="cp-div"><div class="cp-g3"><div><div class="cp-lbl">Routing #</div><div class="cp-val">'+(c.routing||'—')+'</div></div><div><div class="cp-lbl">Account #</div><div class="cp-val">'+(c.account||'—')+'</div></div><div><div class="cp-lbl">Check #</div><div class="cp-val">'+c.checknum+'</div></div></div>'+(c.bank?'<div style="margin-top:8px;"><div class="cp-lbl">Bank</div><div class="cp-val">'+c.bank+'</div></div>':'')+'</div>'+(c.depositDate?'<div style="margin-top:9px;padding:10px;background:rgba(28,39,64,0.8);border-radius:9px;border:1px solid var(--border);">'+getDepRow(c)+'</div>':'')+'<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:12px;margin-top:8px;padding:10px;background:rgba(15,25,45,0.5);border-radius:8px;border:1px solid var(--border);"><div><span style="color:var(--dim);">📞</span> '+(c.phone||'—')+'</div><div>'+statusBadge(c.status)+'</div><div><span style="color:var(--dim);">🔴 Returns:</span> '+(c.bounces?c.bounces.length:0)+'</div><div><span style="color:var(--dim);">📝</span> '+(c.notes||'—')+'</div></div>';
+  document.getElementById('moView').classList.add('open');
+}
+
+function openBounce(id){
+  document.getElementById('mBounceId').value=id;
+  document.getElementById('mBounceDate').value=todayStr();
+  document.getElementById('mBounceNote').value='';
+  document.getElementById('moBounce').classList.add('open');
+}
+
+function confirmBounce(){
+  var id=document.getElementById('mBounceId').value;
+  var c=checks.find(function(x){return x.id===id;});if(!c)return;
+  c.status='bounced';c.bounces=c.bounces||[];
+  c.bounces.push({reason:document.getElementById('mBounceReason').value,date:document.getElementById('mBounceDate').value,note:document.getElementById('mBounceNote').value,recordedAt:new Date().toISOString()});
+  closeMo('moBounce');saveLocal();refreshAll();renderChecks();
+  showToast('🔴 Bounce recorded');saveToCloud(c);
+}
+
+function closeMo(id){document.getElementById(id).classList.remove('open');}
+
+function renderStats(){
+  var tot=checks.length,totAmt=checks.reduce(function(s,c){return s+c.amount;},0);
+  var bn=checks.filter(function(c){return c.status==='bounced';}).length;
+  var cl=checks.filter(function(c){return c.status==='cleared';}).length;
+  var dueT=checks.filter(function(c){return c.status!=='cleared'&&dStatus(c)==='today';}).length;
+  var ov=checks.filter(function(c){return c.status!=='cleared'&&dStatus(c)==='overdue';}).length;
+  var rate=tot?((bn/tot)*100).toFixed(1):'0.0';
+  var custCnt=Object.keys(getCustomers()).length;
+  document.getElementById('statsGrid').innerHTML='<div class="sc"><div class="i">👥</div><div class="v vo">'+custCnt+'</div><div class="t">Customers</div></div><div class="sc"><div class="i">📋</div><div class="v vb">'+tot+'</div><div class="t">Total Checks</div></div><div class="sc"><div class="i">💰</div><div class="v vg">$'+totAmt.toLocaleString('en-US',{maximumFractionDigits:0})+'</div><div class="t">Total Amount</div></div><div class="sc"><div class="i">🏦</div><div class="v vg">'+dueT+'</div><div class="t">Due Today</div></div><div class="sc"><div class="i">⚠️</div><div class="v vr">'+ov+'</div><div class="t">Overdue</div></div><div class="sc"><div class="i">🔴</div><div class="v vr">'+bn+'</div><div class="t">Bounced</div></div><div class="sc"><div class="i">✅</div><div class="v vg">'+cl+'</div><div class="t">Cleared</div></div><div class="sc"><div class="i">📈</div><div class="v vo">'+rate+'%</div><div class="t">Bounce Rate</div></div>';
+  var ts=todayStr();
+  var next30=checks.filter(function(c){return c.depositDate&&c.status!=='cleared'&&ddiff(c.depositDate,ts)>=0&&ddiff(c.depositDate,ts)<=30;}).sort(function(a,b){return a.depositDate<b.depositDate?-1:1;});
+  document.getElementById('upcomingSched').innerHTML=next30.length?'<div class="tw"><table><thead><tr><th>Deposit Date</th><th>Customer</th><th>Check #</th><th>Bank</th><th>Amount</th><th>Days</th><th>Status</th></tr></thead><tbody>'+next30.map(function(c){var d=ddiff(c.depositDate,ts),ds=dStatus(c);return'<tr><td class="mono">'+fmtD(c.depositDate)+'</td><td style="font-weight:600;">'+c.store+'</td><td class="mono">'+c.checknum+'</td><td style="color:var(--dim);">'+(c.bank||'—')+'</td><td class="mono" style="color:var(--green);">$'+fmt(c.amount)+'</td><td>'+(ds==='today'?'<span style="color:var(--green);font-weight:700;">TODAY</span>':d+'d')+'</td><td>'+statusBadge(c.status)+'</td></tr>';}).join('')+'</tbody></table></div>':'<div class="empty" style="padding:24px;"><p>No upcoming deposits</p></div>';
+  var custs=Object.values(getCustomers()).sort(function(a,b){return b.checks.length-a.checks.length;});
+  document.getElementById('custsSummary').innerHTML=custs.length?'<div class="tw"><table><thead><tr><th>Customer</th><th>Checks</th><th>Total</th><th>Cleared</th><th>Bounced</th><th>Action</th></tr></thead><tbody>'+custs.map(function(c){var tot2=c.checks.reduce(function(s,x){return s+x.amount;},0);var bc=c.checks.filter(function(x){return x.bounces&&x.bounces.length>0;}).length;var cl2=c.checks.filter(function(x){return x.status==='cleared';}).length;return'<tr><td style="font-weight:700;">'+c.name+'</td><td><span style="background:rgba(255,137,0,0.12);color:var(--orange2);font-weight:700;padding:2px 9px;border-radius:12px;font-size:11px;">'+c.checks.length+'</span></td><td class="mono" style="color:var(--green);">$'+fmt(tot2)+'</td><td><span class="badge b-cleared">'+cl2+'</span></td><td>'+(bc>0?'<span class="badge b-bounced">🔴'+bc+'</span>':'<span style="color:var(--dim);">0</span>')+'</td><td><button class="btn btn-sm btn-orange" onclick="selectCustomer(\''+c.name.replace(/'/g,"\\'")+'\');showTab(\'search\',document.getElementById(\'tab-search\'))">👤 View</button></td></tr>';}).join('')+'</tbody></table></div>':'<div class="empty" style="padding:24px;"><p>No customers yet</p></div>';
+}
+
+function updateHeader(){
+  document.getElementById('h-total').textContent=checks.length;
+  document.getElementById('h-custs').textContent=Object.keys(getCustomers()).length;
+  var tot=checks.reduce(function(s,c){return s+c.amount;},0);
+  document.getElementById('h-amount').textContent='$'+tot.toLocaleString('en-US',{maximumFractionDigits:0});
+  document.getElementById('h-today').textContent=checks.filter(function(c){return c.status!=='cleared'&&dStatus(c)==='today';}).length;
+  document.getElementById('h-bounced').textContent=checks.filter(function(c){return c.status==='bounced';}).length;
+}
+
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
+
+document.addEventListener('click',function(e){if(!e.target.closest('.srch-wrap'))document.getElementById('srchSugs').classList.remove('open');});
+
+// INIT
+document.getElementById('f-date').value=todayStr();
+document.getElementById('dateToday').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+loadLocal();
+updateHeader();refreshAlerts();refreshStoreList();
+startFirebaseSync();
+</script>
+</body>
+</html>
